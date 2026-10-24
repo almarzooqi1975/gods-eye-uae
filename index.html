@@ -7,7 +7,7 @@
 <meta name="description" content="Gods Eye — open-signals mission console for Middle East cameras. UAE first: live camera grid, ADS-B air traffic, USGS seismic, ISS telemetry, weather wire.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="GODS EYE // UAE — Middle East Signals Command">
-<meta property="og:description" content="Open-signals mission console: 16-node Middle East camera grid (UAE first), live ADS-B air traffic, USGS seismic, ISS telemetry and weather wire — one file, zero dependencies.">
+<meta property="og:description" content="Open-signals mission console: 20-node Middle East camera grid (UAE first), live ADS-B air traffic, USGS seismic, ISS telemetry and weather wire — one file, zero dependencies.">
 <meta property="og:image" content="screenshots/field-build-theater.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="GODS EYE // UAE — Middle East Signals Command">
@@ -203,6 +203,13 @@ button{font-family:var(--mono)}
 #cam-detail .cd-name{font-size:14px;color:var(--amber);letter-spacing:.06em;margin-bottom:2px}
 #cam-detail .cd-city{font-size:9px;letter-spacing:.2em;color:var(--dim);margin-bottom:10px}
 .cdv{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0}
+#cd-player{margin:10px 0 2px}
+#cd-player[hidden]{display:none}
+.pl-tag{font-size:10px;letter-spacing:.14em;color:var(--amber);margin-bottom:6px}
+.pl-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#ff4d4d;margin-right:6px;animation:blink 1.4s infinite}
+#cd-player-frame{position:relative;padding-top:56.25%;background:#000;border:1px solid color-mix(in srgb,var(--amber) 25%,transparent)}
+#cd-player-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.pl-note{font-size:9px;color:#8d8875;letter-spacing:.08em;margin-top:5px}
 .cdv div{border:1px solid var(--line-soft);background:rgba(0,0,0,.3);padding:5px 8px}
 .cdv b{display:block;font-size:8px;letter-spacing:.2em;color:var(--dim);font-weight:400}
 .cdv span{font-size:12px;color:var(--ink);font-variant-numeric:tabular-nums}
@@ -310,7 +317,7 @@ button{font-family:var(--mono)}
   </div>
   <div id="counters">
     <div class="counter"><b>Aircraft</b><span id="c-air">--</span></div>
-    <div class="counter"><b>Cameras</b><span id="c-cam">16</span></div>
+    <div class="counter"><b>Cameras</b><span id="c-cam">20</span></div>
     <div class="counter"><b>Seismic 24h</b><span id="c-seis">--</span></div>
   </div>
   <div id="chips">
@@ -368,6 +375,11 @@ button{font-family:var(--mono)}
           <div class="cd-name hud-glow" id="cd-name"></div>
           <div class="cd-city" id="cd-city"></div>
           <div class="tagline" id="cd-tags"></div>
+          <div id="cd-player" hidden>
+            <div class="pl-tag"><span class="pl-dot"></span>LIVE STREAM — EMBEDDED VIEW</div>
+            <div id="cd-player-frame"></div>
+            <div class="pl-note">OFFICIAL SOURCE PLAYER · OPEN LIVE FEED FOR FULL SCREEN</div>
+          </div>
           <div class="cdv">
             <div><b>LAT</b><span id="cd-lat"></span></div>
             <div><b>LON</b><span id="cd-lon"></span></div>
@@ -378,7 +390,7 @@ button{font-family:var(--mono)}
           <p class="note" id="cd-note"></p>
         </div>
         <div class="sect" id="cam-list-sect">
-          <h3>Camera grid — <span id="cam-count">16</span> nodes</h3>
+          <h3>Camera grid — <span id="cam-count">20</span> nodes</h3>
           <div id="cam-list"></div>
         </div>
       </div>
@@ -437,7 +449,7 @@ const C={
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const pad2=n=>String(n).padStart(2,'0');
 
-/* ── CAMERA GRID — 16 nodes, cloned 1:1 from the Middle East Signals Command catalog ── */
+/* ── CAMERA GRID — 20 nodes, cloned 1:1 from the Middle East Signals Command catalog ── */
 const CAMS=[
  {id:'dxb-marina-princess',code:'DXB-01',name:'Dubai Marina — Princess Tower',city:'Dubai',country:'United Arab Emirates',lat:25.0789,lon:55.1382,provider:'SkylineWebcams',pageUrl:'https://www.skylinewebcams.com/en/webcam/united-arab-emirates/dubai/dubai/dubai-marina.html',tier:'verified',domain:'URBAN',note:'View over Dubai Marina, JLT, Sheikh Zayed Road and Metro line from Princess Tower.'},
  {id:'dxb-skyline-princess',code:'DXB-02',name:'Dubai Skyline — Princess Tower',city:'Dubai',country:'United Arab Emirates',lat:25.0778,lon:55.1367,provider:'SkylineWebcams',pageUrl:'https://www.skylinewebcams.com/en/webcam/united-arab-emirates/dubai/dubai/dubai.html',tier:'verified',domain:'URBAN',note:'Panoramic view of Dubai city from one of the tallest residential towers on earth.'},
@@ -455,6 +467,10 @@ const CAMS=[
  {id:'ist-goldenhorn',code:'IST-01',name:'Istanbul — Golden Horn',city:'Istanbul',country:'Türkiye',lat:41.0201,lon:28.9703,provider:'SkylineWebcams',pageUrl:'https://www.skylinewebcams.com/en/webcam/turkey.html',tier:'listed',domain:'URBAN',note:'The Golden Horn estuary — historic waterway between old and new Istanbul.'},
  {id:'jrs-oldcity',code:'JRS-01',name:'Jerusalem — Old City Overview',city:'Jerusalem',country:'Israel / Palestine',lat:31.7767,lon:35.2345,provider:'SkylineWebcams',pageUrl:'https://www.skylinewebcams.com/en/webcam/israel.html',tier:'listed',domain:'HERITAGE',note:'Live view over the Old City of Jerusalem.'},
  {id:'ptra-valley',code:'PTRA-01',name:'Petra — Rose City Approach',city:"Ma'an Governorate",country:'Jordan',lat:30.3285,lon:35.4444,provider:'SkylineWebcams',pageUrl:'https://www.skylinewebcams.com/en/webcam/jordan.html',tier:'listed',domain:'HERITAGE',note:'The Nabataean rose-red city half as old as time.'},
+ {id:'dxb-247-burj',code:'DXB-05',name:'Dubai 24/7 — Burj Khalifa Skyline',city:'Dubai',country:'United Arab Emirates',lat:25.1972,lon:55.2744,provider:'UinDubai · YouTube',pageUrl:'https://www.youtube.com/watch?v=MIhw4UPYjMQ',embed:'MIhw4UPYjMQ',tier:'verified',domain:'URBAN',note:'Continuous 24/7 live panorama over the Burj Khalifa and Downtown Dubai, streamed by the UinDubai channel.'},
+ {id:'mkk-haram',code:'MKKA-01',name:'Makkah — Masjid al-Haram',city:'Makkah',country:'Kingdom of Saudi Arabia',lat:21.3891,lon:39.8256,provider:'KSA Quran TV · YouTube',pageUrl:'https://www.youtube.com/watch?v=BZAe-d6HKeE',embed:'BZAe-d6HKeE',tier:'verified',domain:'HERITAGE',note:'Official 24/7 broadcast of the Grand Mosque — Saudi Broadcasting Authority Quran TV channel.'},
+ {id:'mdn-nabawi',code:'MDNA-01',name:'Madinah — Masjid an-Nabawi',city:'Madinah',country:'Kingdom of Saudi Arabia',lat:24.4672,lon:39.6112,provider:'Sunnah TV · YouTube',pageUrl:'https://www.youtube.com/watch?v=mXcmTPuQH90',embed:'mXcmTPuQH90',tier:'verified',domain:'HERITAGE',note:'Official 24/7 broadcast of the Prophet\u2019s Mosque — Saudi Sunnah TV channel.'},
+ {id:'jrs-kotel',code:'JRS-02',name:'Jerusalem — Western Wall (Kotel)',city:'Jerusalem',country:'Israel / Palestine',lat:31.7767,lon:35.2345,provider:'Western Wall Heritage · YouTube',pageUrl:'https://www.youtube.com/watch?v=761dvGcOixo',embed:'761dvGcOixo',tier:'verified',domain:'HERITAGE',note:'Official live view of the Western Wall plaza from the Western Wall Heritage Foundation.'},
 ];
 CAMS.forEach(c=>{c.me=c.country!=='United Arab Emirates';c.online=Math.random()>.05;});
 const camByCode=Object.fromEntries(CAMS.map(c=>[c.code,c]));
@@ -853,7 +869,7 @@ async function pullWire(){
       S.wire.push({t:'SEISMIC — M '+(+q.mag).toFixed(1)+' '+q.place,src:'USGS 24H',crit:q.mag>=4.5});}
     if(S.aircraft.length)S.wire.push({t:'GULF AIR PICTURE — '+S.aircraft.length+' transponders fused ('+S.aircraftSrc+')',src:'ADS-B MESH'});
     METROS.forEach(m=>{if(S.wx[m.k])S.wire.push({t:m.k+' METEO — '+S.wx[m.k].t+'°C WIND '+S.wx[m.k].w+' KT',src:'OPEN-METEO'});});
-    S.wire.push({t:'CAMERA GRID — '+CAMS.filter(c=>c.online).length+'/16 nodes reporting',src:'GODS EYE'});
+    S.wire.push({t:'CAMERA GRID — '+CAMS.filter(c=>c.online).length+'/'+CAMS.length+' nodes reporting',src:'GODS EYE'});
     if(S.iss)S.wire.push({t:'ISS — '+S.iss.lat.toFixed(1)+'N '+S.iss.lon.toFixed(1)+'E · ALT '+Math.round(S.iss.alt)+' KM',src:'WHERETHEISS.AT'});
     S.wire.push({t:'OPEN SIGNALS ONLY — ALL FEEDS PUBLIC & ATTRIBUTED',src:'DOCTRINE'});
   }
@@ -954,7 +970,7 @@ async function probe(url){
 }
 function showCamDetail(c){
   const det=$('#cam-detail'),emp=$('#cam-empty');
-  if(!c){det.style.display='none';emp.style.display='block';return;}
+  if(!c){det.style.display='none';emp.style.display='block';$('#cd-player').hidden=true;$('#cd-player-frame').innerHTML='';return;}
   det.style.display='block';emp.style.display='none';
   $('#cd-name').textContent=c.code+' — '+c.name;
   $('#cd-city').textContent=c.city.toUpperCase()+' · '+c.country.toUpperCase();
@@ -968,7 +984,11 @@ function showCamDetail(c){
   $('#cd-prov').textContent=c.provider;
   $('#cd-link').textContent='probing…';
   $('#cd-feed').href=c.pageUrl;
-  $('#cd-note').textContent=c.note+' Source page opens in a new tab — providers serve the live stream on their own domain (X-Frame-Options protected).';
+  const PL=$('#cd-player'),PF=$('#cd-player-frame');
+  if(c.embed){PL.hidden=false;
+    PF.innerHTML='<iframe src="https://www.youtube.com/embed/'+c.embed+'?autoplay=1&mute=1&playsinline=1&rel=0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy" title="'+c.code+' live stream"></iframe>';}
+  else{PL.hidden=true;PF.innerHTML='';}
+  $('#cd-note').textContent=c.note+' '+(c.embed?'Live view embedded above via the source\u2019s official player — OPEN LIVE FEED opens the full-screen source page.':'Source page opens in a new tab — providers serve the live stream on their own domain (X-Frame-Options protected).');
   probe(c.pageUrl).then(r=>{if(S.selected===c)$('#cd-link').textContent=r;});
 }
 
@@ -1020,10 +1040,10 @@ function compileBrief(force){
   const strongest=[...S.quakes].sort((a,b)=>b.mag-a.mag)[0];
   const wxd=S.wx.DXB?S.wx.DXB.t+'°C':'—';
   const lines=[];
-  lines.push('SECTOR — Gulf theater fusing <em>'+S.aircraft.length+'</em> air transponders ('+S.aircraftSrc+') across the Arabian Peninsula approaches; UAE camera grid holds <em>'+online+'/16</em> reporting nodes.');
+  lines.push('SECTOR — Gulf theater fusing <em>'+S.aircraft.length+'</em> air transponders ('+S.aircraftSrc+') across the Arabian Peninsula approaches; camera grid holds <em>'+online+'/'+CAMS.length+'</em> reporting nodes, '+CAMS.filter(c=>c.embed).length+' with in-page embedded streams.');
   lines.push('SEISMIC — USGS logged <em>'+S.quakes.length+'</em> Middle East events in the 24h window'+(strongest?', strongest <em>M '+(+strongest.mag).toFixed(1)+'</em> '+esc(strongest.place):'')+'. No tsunami advisory implied by this console.');
   lines.push('WEATHER — Dubai <em>'+wxd+'</em>, Abu Dhabi '+(S.wx.AUH?S.wx.AUH.t+'°C':'—')+', Sharjah '+(S.wx.SHJ?S.wx.SHJ.t+'°C':'—')+'; optics nominal across the grid'+(S.wx.DXB&&S.wx.DXB.w>30?' — visibility flag on Gulf haze corridor':'')+'.');
-  lines.push('REGIONAL — ME heritage nodes <em>CAI-01/02 · IST-01 · JRS-01 · PTRA-01</em> standing by; select via the ME THEATER mini-map or the camera roster.');
+  lines.push('REGIONAL — ME nodes <em>CAI-01/02 · IST-01 · JRS-01/02 · MKKA-01 · MDNA-01 · PTRA-01</em> standing by — MKKA-01, MDNA-01, JRS-02 and DXB-05 stream embedded in-page.');
   if(S.iss)lines.push('ORBITAL — ISS overhead <em>'+S.iss.lat.toFixed(1)+'N '+S.iss.lon.toFixed(1)+'E</em> at '+Math.round(S.iss.alt)+' km, '+Math.round(S.iss.vel).toLocaleString('en')+' km/h.');
   lines.push('WIRE — '+S.wireSrc+' tap buffering <em>'+S.wire.length+'</em> items. Doctrine: <em>OPEN SIGNALS ONLY</em>.');
   el.innerHTML=lines.map(l=>'▸ '+l).join('\n\n')+'\n\n— GODS EYE ON-DEVICE ANALYST // FIELD BUILD';
@@ -1129,7 +1149,7 @@ $('#c-air').textContent=S.aircraft.length;$('#air-mode').textContent='SIM CONTAC
 setChip('adsb','SIM','sim');
 buildLayers();buildCamList();
 logEvent('info','GODS EYE FIELD BUILD online — single-file console, Canvas 2D renderer');
-logEvent('info','16-node camera manifest loaded — UAE grid + ME regional');
+logEvent('info','20-node camera manifest loaded — UAE grid + ME regional');
 pullAircraft();pullQuakes();pullWx();pullIss();pullWire();
 setInterval(pullAircraft,15000);setInterval(pullQuakes,300000);
 setInterval(pullWx,120000);setInterval(pullIss,6000);setInterval(pullWire,120000);

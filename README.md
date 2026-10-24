@@ -38,7 +38,7 @@ monospace HUD typography, CRT scanline texture). It ships in two editions:
 | **AI analyst** | On-device heuristic brief | LLM-powered situation brief (`/api/analyst`) |
 | **Best for** | Instant launch, sharing, embedding | The full cinematic experience |
 
-Both editions track the same mission picture: a **16-node Middle East camera grid with the
+Both editions track the same mission picture: a **20-node Middle East camera grid with the
 UAE at the center**, live aircraft over the Gulf, seismic events from USGS, ISS passes,
 regional weather, and a news wire — every feed public, every data source attributed on-screen.
 
@@ -83,8 +83,11 @@ console boots straight into the Arabian Gulf theater. No install, no API keys, n
 - **Vector theater map** — hand-simplified WGS84 coastlines (Arabia incl. Qatar and the
   Musandam enclave, Iran, Qeshm, Bahrain), amber UAE sector with approximate emirate
   borders, graticule, scale bar and compass
-- **16-node camera grid** — click a node for a dashed selection reticle, cinematic zoom,
+- **20-node camera grid** — click a node for a dashed selection reticle, cinematic zoom,
   coordinate/LINK-probe detail panel and an **OPEN LIVE FEED** button to the provider page
+- **4 nodes stream embedded in-page** — DXB-05 (Dubai 24/7 Burj Khalifa), MKKA-01 (Makkah
+  Masjid al-Haram), MDNA-01 (Madinah Masjid an-Nabawi), JRS-02 (Jerusalem Western Wall) play
+  right inside the console via the sources' official YouTube players — no link-out needed
 - **Live ADS-B layer** — aircraft symbols with callsign labels, honestly tagged
   `LIVE` or `SIM` depending on feed reachability from your network
 - **Signal event log + LIVE WIRE ticker** — camera health flicker, quakes, ISS telemetry,
@@ -127,7 +130,7 @@ bun run dev            # or: npm run dev  →  http://localhost:3000
 
 ![Command Center — AIR tab](docs/screenshots/command-center-air-traffic.png)
 
-## 📷 Camera grid — 16 verified public nodes
+## 📷 Camera grid — 20 verified public nodes
 
 | ID | Location | City | Provider |
 |---|---|---|---|
@@ -147,10 +150,17 @@ bun run dev            # or: npm run dev  →  http://localhost:3000
 | IST-01 | Istanbul — Golden Horn | Istanbul | SkylineWebcams |
 | JRS-01 | Jerusalem — Old City Overview | Jerusalem | SkylineWebcams |
 | PTRA-01 | Petra — Rose City Approach | Ma'an Governorate | SkylineWebcams |
+| DXB-05 | Dubai 24/7 — Burj Khalifa Skyline ▶ | Dubai | UinDubai · YouTube |
+| MKKA-01 | Makkah — Masjid al-Haram ▶ | Makkah | KSA Quran TV · YouTube |
+| MDNA-01 | Madinah — Masjid an-Nabawi ▶ | Madinah | Sunnah TV · YouTube |
+| JRS-02 | Jerusalem — Western Wall (Kotel) ▶ | Jerusalem | Western Wall Heritage · YouTube |
 
-Camera hosts block third-party embedding (X-Frame-Options), so the console health-probes
-each node and hands you a one-click **OPEN LIVE FEED** link to the provider's own page —
-no streams are rehosted or proxied.
+▶ = official stream **embedded in-page** (watch it directly inside the console).
+
+Camera hosts block third-party embedding (X-Frame-Options), so link-out nodes health-probe
+each source and hand you a one-click **OPEN LIVE FEED** link to the provider's own page —
+no streams are rehosted or proxied. The four ▶ nodes are played through their sources'
+official YouTube embed players, which do allow in-page embedding.
 
 ## 🛰 Data sources (all public, all attributed)
 
@@ -162,6 +172,7 @@ no streams are rehosted or proxied.
 | ISS | [wheretheiss.at](https://wheretheiss.at) | both editions |
 | News wire | [GDELT](https://www.gdeltproject.org) (rate-limit aware, graceful sync state) | both editions |
 | Camera listings | [SkylineWebcams](https://www.skylinewebcams.com) · [WorldCam](https://worldcam.eu) | both editions |
+| Embedded cams | YouTube: UinDubai · [KSA Quran TV](https://www.youtube.com/@SaudiQuranTv) · Sunnah TV · Western Wall Heritage | both editions |
 | Basemap | Esri World Imagery (Esri, Maxar, OSM) | Command Center |
 | Overlays | RainViewer radar · NASA GIBS MODIS | Command Center |
 

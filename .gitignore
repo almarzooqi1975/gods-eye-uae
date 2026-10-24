@@ -1,0 +1,24 @@
+# --- Command Center (Next.js) ---
+command-center/node_modules/
+command-center/.next/
+command-center/out/
+command-center/dev.log
+command-center/server.log
+command-center/.env
+command-center/.env*.local
+command-center/.eslintcache
+
+# Prisma / SQLite runtime artifacts (schema is tracked, db files are local)
+command-center/db/*.db
+command-center/db/*.db-journal
+
+# --- GitHub Pages build artifact ---
+_site/
+
+# --- OS / editor noise ---
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/

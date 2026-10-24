@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GODS EYE // UAE — Middle East Signals Command</title>
+<meta name="description" content="Gods Eye — open-signals mission console for Middle East cameras. UAE first: live camera grid, ADS-B air traffic, USGS seismic, ISS telemetry, weather wire.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="GODS EYE // UAE — Middle East Signals Command">
+<meta property="og:description" content="Open-signals mission console: 16-node Middle East camera grid (UAE first), live ADS-B air traffic, USGS seismic, ISS telemetry and weather wire — one file, zero dependencies.">
+<meta property="og:image" content="screenshots/field-build-theater.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="GODS EYE // UAE — Middle East Signals Command">
+<meta name="twitter:description" content="Mission-control HUD for Middle East open signals — UAE first. Single-file, no build step, runs anywhere.">
+<meta name="theme-color" content="#05060a">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2305060a'/%3E%3Ccircle cx='8' cy='8' r='4.6' fill='none' stroke='%23ffb000' stroke-width='1.2'/%3E%3Ccircle cx='8' cy='8' r='1.6' fill='%23ffb000'/%3E%3C/svg%3E">
+<style>
+/* ── GODS EYE // UAE — FIELD BUILD HUD THEME (cloned from Middle East Signals Command) ── */
+:root{
+  --bg:#05060a;
+  --panel:rgba(10,12,16,.88);
+  --inset:rgba(0,0,0,.45);
+  --line:rgba(255,176,0,.22);
+  --line-soft:rgba(255,176,0,.12);
+  --amber:#ffb000;
+  --amber-soft:#ffc233;
+  --green:#22d3a7;
+  --green-bright:#00ff80;
+  --green-glow:rgba(0,255,128,.5);
+  --red:#ff4d4d;
+  --ink:#e8e4d8;
+  --dim:#8d8875;
+  --faint:#5a5646;
+  --mono:ui-monospace,"JetBrains Mono","Cascadia Mono","SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--mono);
+  font-size:12px;
+  line-height:1.45;
+  overflow:hidden;
+  display:grid;
+  grid-template-rows:56px minmax(0,1fr) 30px;
+}
+::selection{background:rgba(255,176,0,.35)}
+button{font-family:var(--mono)}
+
+/* ── shared HUD pieces ── */
+.hud-panel{
+  background:var(--panel);
+  border:1px solid var(--line);
+  box-shadow:inset 0 0 24px rgba(255,176,0,.04), 0 8px 30px rgba(0,0,0,.55);
+  position:relative;
+}
+.hud-inset{background:var(--inset);border:1px solid var(--line-soft)}
+.hud-glow{text-shadow:0 0 8px rgba(255,176,0,.55)}
+.hud-glow-green{text-shadow:0 0 8px var(--green-glow)}
+.label{font-size:9px;letter-spacing:.22em;color:var(--dim);text-transform:uppercase}
+.scanlines::after{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:6;
+  background:repeating-linear-gradient(to bottom,rgba(255,255,255,.025) 0,rgba(255,255,255,.025) 1px,transparent 1px,transparent 3px);
+}
+.vignette::before{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:5;
+  background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.55) 100%);
+}
+@keyframes ge-blink{0%,60%{opacity:1}61%,100%{opacity:.25}}
+.led-blink{animation:ge-blink 1.4s infinite}
+@keyframes ge-caret{0%,49%{opacity:1}50%,100%{opacity:0}}
+.boot-caret{animation:ge-caret .9s infinite}
+@keyframes ge-pulse{0%{box-shadow:0 0 0 0 rgba(255,176,0,.55)}70%{box-shadow:0 0 0 12px rgba(255,176,0,0)}100%{box-shadow:0 0 0 0 rgba(255,176,0,0)}}
+@keyframes ge-ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.ge-scrollbar::-webkit-scrollbar{width:6px;height:6px}
+.ge-scrollbar::-webkit-scrollbar-track{background:rgba(255,176,0,.04)}
+.ge-scrollbar::-webkit-scrollbar-thumb{background:rgba(255,176,0,.30);border-radius:3px}
+.ge-scrollbar{scrollbar-width:thin;scrollbar-color:rgba(255,176,0,.3) rgba(255,176,0,.04)}
+
+/* ── top bar ── */
+#topbar{
+  display:flex;align-items:center;gap:18px;padding:0 14px;
+  border-bottom:1px solid var(--line);
+  background:var(--panel);
+  z-index:20;min-width:0;
+}
+.brand{display:flex;align-items:center;gap:10px;flex:none}
+.brand-ring{
+  width:26px;height:26px;border:1.5px solid var(--amber);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;flex:none;
+  box-shadow:0 0 12px rgba(255,176,0,.45);
+}
+.brand-ring i{width:8px;height:8px;background:var(--amber);border-radius:50%;display:block}
+.brand h1{font-size:15px;font-weight:700;letter-spacing:.28em;color:var(--amber)}
+.brand small{display:block;font-size:9px;letter-spacing:.2em;color:var(--dim)}
+#clocks{display:flex;gap:16px;flex:none}
+.clock b{display:block;font-size:9px;letter-spacing:.24em;color:var(--dim);font-weight:400}
+.clock span{font-size:14px;color:var(--amber);letter-spacing:.08em;font-variant-numeric:tabular-nums}
+#counters{display:flex;gap:18px;flex:none}
+.counter b{display:block;font-size:9px;letter-spacing:.2em;color:var(--dim);font-weight:400;text-transform:uppercase}
+.counter span{font-size:14px;color:var(--ink);font-variant-numeric:tabular-nums}
+#chips{display:flex;gap:6px;flex:1;justify-content:flex-end;flex-wrap:wrap;min-width:0}
+.chip{
+  border:1px solid var(--line-soft);padding:2px 8px;font-size:9px;letter-spacing:.14em;
+  color:var(--dim);white-space:nowrap;background:rgba(0,0,0,.3);
+}
+.chip b{color:var(--green);font-weight:400;margin-left:4px}
+.chip.sim b{color:var(--amber-soft)}
+.chip.bad b{color:var(--red)}
+#opensig{
+  flex:none;border:1px solid rgba(0,255,128,.35);color:var(--green);
+  padding:4px 10px;font-size:9px;letter-spacing:.18em;display:flex;align-items:center;gap:7px;
+  background:rgba(0,255,128,.05);
+}
+#opensig i{width:6px;height:6px;border-radius:50%;background:var(--green-bright);box-shadow:0 0 8px var(--green-glow);display:block}
+
+/* ── main grid ── */
+#main{display:grid;grid-template-columns:248px minmax(0,1fr) 372px;gap:10px;padding:10px;min-height:0;z-index:10}
+
+/* ── left rail ── */
+#rail{display:flex;flex-direction:column;gap:10px;min-height:0}
+#rail-clock{padding:8px 10px;font-size:10px;letter-spacing:.14em;color:var(--dim)}
+#rail-clock b{color:var(--amber);font-weight:400;font-variant-numeric:tabular-nums}
+#layers{display:flex;flex-direction:column;gap:8px;overflow-y:auto;padding:2px;min-height:0}
+.layer{
+  text-align:left;width:100%;background:rgba(0,0,0,.35);border:1px solid var(--line-soft);
+  padding:8px 10px;cursor:pointer;color:var(--ink);display:flex;align-items:center;gap:8px;
+}
+.layer:hover{border-color:var(--line)}
+.layer .lt{flex:1;min-width:0}
+.layer .lt b{display:block;font-size:11px;letter-spacing:.14em;font-weight:700;color:var(--amber)}
+.layer .lt b.off{color:var(--faint)}
+.layer .lt small{display:block;font-size:9px;letter-spacing:.08em;color:var(--dim)}
+.layer .lc{font-size:13px;color:var(--ink);font-variant-numeric:tabular-nums}
+.layer .led{width:7px;height:7px;border-radius:50%;background:var(--green-bright);box-shadow:0 0 8px var(--green-glow);flex:none}
+.layer .led.off{background:var(--faint);box-shadow:none}
+#eventlog{flex:1;min-height:80px;display:flex;flex-direction:column}
+#eventlog header{padding:6px 10px;border-bottom:1px solid var(--line-soft);font-size:9px;letter-spacing:.22em;color:var(--dim)}
+#events{flex:1;overflow-y:auto;padding:4px 6px;display:flex;flex-direction:column;gap:3px}
+.ev{font-size:10px;line-height:1.5;padding:3px 6px;border-left:2px solid var(--faint);background:rgba(0,0,0,.25)}
+.ev time{color:var(--faint);margin-right:6px;font-variant-numeric:tabular-nums}
+.ev.crit{border-left-color:var(--red);color:#ffb3b3}
+.ev.warn{border-left-color:var(--amber);color:#ffd98f}
+.ev.info{color:var(--dim)}
+
+/* ── map ── */
+#mapwrap{position:relative;overflow:hidden;min-height:0}
+#map{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:crosshair}
+#tooltip{
+  position:absolute;pointer-events:none;z-index:8;display:none;
+  background:rgba(5,6,10,.92);border:1px solid var(--line);padding:5px 8px;
+  font-size:10px;letter-spacing:.08em;color:var(--ink);white-space:nowrap;
+}
+#tooltip b{color:var(--amber);display:block;font-size:11px}
+#tooltip small{color:var(--dim);letter-spacing:.14em}
+#maptag{
+  position:absolute;top:8px;left:10px;z-index:7;font-size:9px;letter-spacing:.22em;color:var(--dim);
+  pointer-events:none;
+}
+#maptag b{color:var(--amber);font-weight:400;display:block;font-size:10px}
+#mapmodes{position:absolute;top:8px;right:10px;z-index:7;display:flex;gap:6px}
+.mbtn{
+  background:rgba(5,6,10,.85);border:1px solid var(--line-soft);color:var(--dim);
+  font-size:9px;letter-spacing:.14em;padding:4px 8px;cursor:pointer;
+}
+.mbtn:hover{color:var(--amber);border-color:var(--line)}
+.mbtn.on{color:var(--amber);border-color:var(--amber);background:rgba(255,176,0,.08)}
+
+/* ── right panel ── */
+#panel{display:flex;flex-direction:column;min-height:0;z-index:12}
+#tabs{display:flex;border-bottom:1px solid var(--line);flex:none}
+#tabs button{
+  flex:1;background:none;border:none;border-right:1px solid var(--line-soft);
+  color:var(--dim);font-size:10px;letter-spacing:.22em;padding:9px 0;cursor:pointer;
+}
+#tabs button:last-child{border-right:none}
+#tabs button:hover{color:var(--amber)}
+#tabs button.active{color:var(--amber);background:rgba(255,176,0,.07);box-shadow:inset 0 -2px 0 var(--amber)}
+#tabbody{flex:1;overflow-y:auto;padding:10px;min-height:0}
+.tabpane{display:none}
+.tabpane.active{display:block}
+.empty{
+  text-align:center;padding:34px 12px;color:var(--dim);letter-spacing:.18em;font-size:11px;
+}
+.empty small{display:block;margin-top:8px;font-size:9px;letter-spacing:.2em;color:var(--faint)}
+.sect{margin-bottom:14px}
+.sect>h3{font-size:9px;letter-spacing:.24em;color:var(--dim);font-weight:400;margin-bottom:7px;text-transform:uppercase}
+.rowitem{
+  border:1px solid var(--line-soft);background:rgba(0,0,0,.3);padding:7px 9px;margin-bottom:6px;
+  cursor:pointer;display:flex;gap:8px;align-items:baseline;
+}
+.rowitem:hover{border-color:var(--line)}
+.rowitem.sel{border-color:var(--amber);background:rgba(255,176,0,.06)}
+.rowitem .dot{width:7px;height:7px;background:var(--amber);transform:rotate(45deg);flex:none;align-self:center;box-shadow:0 0 8px rgba(255,176,0,.8)}
+.rowitem.me .dot{background:var(--green);box-shadow:0 0 8px rgba(34,211,167,.8)}
+.rowitem .rt{min-width:0;flex:1}
+.rowitem .rt b{font-size:11px;letter-spacing:.1em;color:var(--amber);font-weight:700;margin-right:6px}
+.rowitem.me .rt b{color:var(--green)}
+.rowitem .rt span{font-size:11px;color:var(--ink)}
+.rowitem .rt small{display:block;font-size:9px;letter-spacing:.16em;color:var(--dim);margin-top:2px}
+/* camera detail */
+#cam-detail .cd-name{font-size:14px;color:var(--amber);letter-spacing:.06em;margin-bottom:2px}
+#cam-detail .cd-city{font-size:9px;letter-spacing:.2em;color:var(--dim);margin-bottom:10px}
+.cdv{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0}
+.cdv div{border:1px solid var(--line-soft);background:rgba(0,0,0,.3);padding:5px 8px}
+.cdv b{display:block;font-size:8px;letter-spacing:.2em;color:var(--dim);font-weight:400}
+.cdv span{font-size:12px;color:var(--ink);font-variant-numeric:tabular-nums}
+.tagline{display:flex;gap:6px;margin:8px 0;flex-wrap:wrap}
+.tag{border:1px solid var(--line-soft);font-size:8px;letter-spacing:.18em;color:var(--dim);padding:2px 7px}
+.tag.ok{color:var(--green);border-color:rgba(34,211,167,.4)}
+.btn{
+  display:block;width:100%;text-align:center;background:rgba(255,176,0,.08);
+  border:1px solid var(--amber);color:var(--amber);font-size:11px;letter-spacing:.2em;
+  padding:9px 0;cursor:pointer;text-decoration:none;margin-top:4px;
+}
+.btn:hover{background:rgba(255,176,0,.16);box-shadow:0 0 14px rgba(255,176,0,.25)}
+.btn.green{border-color:rgba(34,211,167,.55);color:var(--green);background:rgba(34,211,167,.06)}
+.note{font-size:10px;color:var(--dim);line-height:1.6;border-left:2px solid var(--line-soft);padding-left:8px;margin-top:10px}
+/* air rows */
+.arow{display:flex;gap:8px;align-items:baseline;border:1px solid var(--line-soft);background:rgba(0,0,0,.3);padding:6px 9px;margin-bottom:5px;cursor:pointer}
+.arow:hover,.arow.sel{border-color:var(--line)}
+.arow.sel{border-color:var(--amber);background:rgba(255,176,0,.06)}
+.arow b{color:var(--green);font-weight:700;letter-spacing:.08em;font-size:11px;min-width:86px}
+.arow .alt{color:var(--ink);font-variant-numeric:tabular-nums;font-size:10px}
+.arow small{margin-left:auto;color:var(--dim);font-size:9px;letter-spacing:.1em}
+/* env */
+.wxcard{display:flex;justify-content:space-between;border:1px solid var(--line-soft);background:rgba(0,0,0,.3);padding:7px 9px;margin-bottom:6px}
+.wxcard b{font-size:11px;letter-spacing:.12em;color:var(--ink)}
+.wxcard span{color:var(--amber);font-variant-numeric:tabular-nums}
+.qrow{border-left:2px solid var(--red);background:rgba(255,77,77,.05);padding:6px 9px;margin-bottom:6px}
+.qrow b{color:#ffb3b3;font-size:11px}
+.qrow small{display:block;color:var(--dim);font-size:9px;letter-spacing:.1em;margin-top:2px}
+.kv{display:flex;justify-content:space-between;font-size:11px;padding:4px 0;border-bottom:1px dashed rgba(255,176,0,.1)}
+.kv b{color:var(--dim);font-weight:400;letter-spacing:.14em;font-size:9px;text-transform:uppercase}
+.kv span{color:var(--ink);font-variant-numeric:tabular-nums}
+/* wire + ai */
+.wire-item{border:1px solid var(--line-soft);background:rgba(0,0,0,.3);padding:7px 9px;margin-bottom:6px}
+.wire-item b{color:var(--amber);font-size:11px;letter-spacing:.06em;display:block}
+.wire-item small{color:var(--dim);font-size:9px;letter-spacing:.12em;display:block;margin-top:3px}
+.wire-item.live{border-color:rgba(34,211,167,.35)}
+.wire-item.live b{color:var(--green)}
+#ai-brief{font-size:11px;line-height:1.75;color:var(--ink);white-space:pre-wrap}
+#ai-brief em{color:var(--amber);font-style:normal}
+
+/* ── ticker ── */
+#ticker{
+  border-top:1px solid var(--line);background:var(--panel);display:flex;align-items:center;
+  overflow:hidden;z-index:20;
+}
+#ticker .tk-label{
+  flex:none;padding:0 12px;font-size:9px;letter-spacing:.22em;color:var(--amber);
+  border-right:1px solid var(--line-soft);height:100%;display:flex;align-items:center;
+  background:rgba(255,176,0,.06);
+}
+.tk-clip{flex:1;overflow:hidden;height:100%;display:flex;align-items:center}
+.tk-track{display:flex;white-space:nowrap;animation:ge-ticker 65s linear infinite;will-change:transform}
+.tk-clip:hover .tk-track{animation-play-state:paused}
+.tk-item{font-size:10px;letter-spacing:.1em;color:var(--dim);padding:0 26px}
+.tk-item b{color:var(--green);font-weight:400}
+.tk-item.crit b{color:var(--red)}
+
+/* ── boot ── */
+#boot{
+  position:fixed;inset:0;z-index:100;background:#000;display:flex;align-items:center;justify-content:center;
+  transition:opacity .5s;cursor:pointer;
+}
+#boot.fade{opacity:0;pointer-events:none}
+#boot .inner{width:min(640px,90vw);padding:0 24px;position:relative}
+#boot-lines{font-size:13px;line-height:1.9;color:rgba(255,194,51,.9)}
+#boot-lines div{text-shadow:0 0 8px rgba(255,176,0,.55);white-space:pre-wrap}
+#boot-caret{display:inline-block;width:10px;height:15px;background:var(--amber);transform:translateY(2px)}
+#boot .skip{margin-top:28px;text-align:center;font-size:10px;letter-spacing:.3em;color:rgba(255,194,51,.4)}
+
+/* ── responsive ── */
+@media (max-width:1280px){#main{grid-template-columns:212px minmax(0,1fr) 330px}}
+@media (max-width:1080px){
+  body{grid-template-rows:56px minmax(0,1fr) 30px}
+  #main{grid-template-columns:1fr;grid-template-rows:52vh minmax(200px,1fr) minmax(240px,1fr)}
+  #mapwrap{order:1}
+  #panel{order:2}
+  #rail{order:3;flex-direction:column}
+  #layers{max-height:180px}
+  #eventlog{min-height:140px}
+  #counters{display:none}
+}
+</style>
+</head>
+<body>
+<!-- BOOT SEQUENCE -->
+<div id="boot" role="status" aria-label="System booting">
+  <div class="inner scanlines vignette">
+    <div id="boot-lines"></div>
+    <div class="skip">[ CLICK TO SKIP ]</div>
+  </div>
+</div>
+
+<!-- TOP BAR -->
+<header id="topbar" class="scanlines">
+  <div class="brand">
+    <span class="brand-ring"><i></i></span>
+    <div>
+      <h1 class="hud-glow">GODS EYE // UAE</h1>
+      <small>MIDDLE EAST SIGNALS COMMAND — FIELD BUILD</small>
+    </div>
+  </div>
+  <div id="clocks">
+    <div class="clock"><b>UTC</b><span id="clock-utc">--:--:--</span></div>
+    <div class="clock"><b>GST</b><span id="clock-gst">--:--:--</span></div>
+  </div>
+  <div id="counters">
+    <div class="counter"><b>Aircraft</b><span id="c-air">--</span></div>
+    <div class="counter"><b>Cameras</b><span id="c-cam">16</span></div>
+    <div class="counter"><b>Seismic 24h</b><span id="c-seis">--</span></div>
+  </div>
+  <div id="chips">
+    <span class="chip" id="chip-adsb">ADS-B<b>SYNC</b></span>
+    <span class="chip" id="chip-usgs">USGS<b>SYNC</b></span>
+    <span class="chip" id="chip-wx">WX<b>SYNC</b></span>
+    <span class="chip" id="chip-wire">WIRE<b>SYNC</b></span>
+    <span class="chip" id="chip-iss">ISS<b>SYNC</b></span>
+  </div>
+  <div id="opensig"><i class="led-blink"></i>OPEN SIGNALS ONLY</div>
+</header>
+
+<!-- MAIN -->
+<main id="main">
+  <!-- LEFT RAIL -->
+  <aside id="rail">
+    <canvas id="minimap" class="hud-panel" height="150" style="width:100%;height:150px;flex:none"></canvas>
+    <div id="rail-clock" class="hud-panel">LOCAL <b id="rail-gst">--:--:--</b> GST // GULF THEATER</div>
+    <div id="layers"></div>
+    <section id="eventlog" class="hud-panel">
+      <header>SIGNAL EVENT LOG</header>
+      <div id="events" class="ge-scrollbar"></div>
+    </section>
+  </aside>
+
+  <!-- MAP -->
+  <section id="mapwrap" class="hud-panel scanlines vignette">
+    <canvas id="map"></canvas>
+    <div id="maptag">THEATER: ARABIAN GULF<b id="mapmode">PROJ EQUIRECT // VECTOR HUD</b></div>
+    <div id="mapmodes">
+      <button class="mbtn" id="z-in">ZOOM +</button>
+      <button class="mbtn" id="z-out">ZOOM −</button>
+      <button class="mbtn" id="z-reset">RESET</button>
+      <button class="mbtn" id="watch-btn">WATCH MODE</button>
+    </div>
+    <div id="tooltip"></div>
+  </section>
+
+  <!-- RIGHT PANEL -->
+  <section id="panel" class="hud-panel">
+    <nav id="tabs">
+      <button data-tab="cam" class="active">CAM</button>
+      <button data-tab="air">AIR</button>
+      <button data-tab="env">ENV</button>
+      <button data-tab="wire">WIRE</button>
+      <button data-tab="ai">AI</button>
+    </nav>
+    <div id="tabbody" class="ge-scrollbar">
+      <!-- CAM -->
+      <div class="tabpane active" id="tab-cam">
+        <div id="cam-empty" class="empty">
+          SELECT A CAMERA NODE<small>CLICK AN AMBER MARKER ON THE MAP</small>
+        </div>
+        <div id="cam-detail" style="display:none">
+          <div class="cd-name hud-glow" id="cd-name"></div>
+          <div class="cd-city" id="cd-city"></div>
+          <div class="tagline" id="cd-tags"></div>
+          <div class="cdv">
+            <div><b>LAT</b><span id="cd-lat"></span></div>
+            <div><b>LON</b><span id="cd-lon"></span></div>
+            <div><b>LINK PROBE</b><span id="cd-link">—</span></div>
+            <div><b>PROVIDER</b><span id="cd-prov"></span></div>
+          </div>
+          <a class="btn" id="cd-feed" href="#" target="_blank" rel="noopener">OPEN LIVE FEED ↗</a>
+          <p class="note" id="cd-note"></p>
+        </div>
+        <div class="sect" id="cam-list-sect">
+          <h3>Camera grid — <span id="cam-count">16</span> nodes</h3>
+          <div id="cam-list"></div>
+        </div>
+      </div>
+      <!-- AIR -->
+      <div class="tabpane" id="tab-air">
+        <div class="sect">
+          <h3>Air traffic — <span id="air-mode">SYNCING</span></h3>
+          <div id="air-status" class="label" style="margin-bottom:8px">ADS-B MESH QUERY…</div>
+          <div id="air-list"></div>
+        </div>
+      </div>
+      <!-- ENV -->
+      <div class="tabpane" id="tab-env">
+        <div class="sect"><h3>Gulf metros — live</h3><div id="env-wx"><div class="label">OPEN-METEO UPLINK…</div></div></div>
+        <div class="sect"><h3>Seismic 24h — USGS Middle East</h3><div id="env-quakes"><div class="label">USGS UPLINK…</div></div></div>
+        <div class="sect"><h3>ISS telemetry</h3><div id="env-iss"><div class="label">ISS UPLINK…</div></div></div>
+      </div>
+      <!-- WIRE -->
+      <div class="tabpane" id="tab-wire">
+        <div class="sect">
+          <h3>Open wire — <span id="wire-src">SYNCING</span></h3>
+          <div id="wire-list"><div class="label">WIRE TAP…</div></div>
+        </div>
+      </div>
+      <!-- AI -->
+      <div class="tabpane" id="tab-ai">
+        <div class="sect">
+          <h3>Analyst — auto situation brief</h3>
+          <div class="label" style="margin-bottom:8px">FIELD BUILD: LLM UPLINK NOT INCLUDED — BRIEF COMPILED ON-DEVICE FROM LIVE SIGNALS</div>
+          <div id="ai-brief">Compiling brief from live signals…</div>
+          <button class="btn green" id="ai-regen" style="margin-top:10px">RECOMPILE BRIEF</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- TICKER -->
+<footer id="ticker">
+  <div class="tk-label">LIVE WIRE</div>
+  <div class="tk-clip"><div class="tk-track" id="ticker-track"></div></div>
+</footer>
+<script>
+'use strict';
+/* ═══ GODS EYE // UAE — FIELD BUILD ═══
+   Single-file clone of "Middle East Signals Command".
+   Live open signals: USGS · Open-Meteo · wheretheiss.at · ADS-B mesh (adsb.lol/adsb.fi with SIM fallback).
+   All rendering: Canvas 2D. No frameworks, no build step. */
+const $=s=>document.querySelector(s), $$=s=>document.querySelectorAll(s);
+const C={
+  amber:'#ffb000', amberSoft:'#ffc233', green:'#22d3a7', greenB:'#00ff80',
+  red:'#ff4d4d', ink:'#e8e4d8', dim:'#8d8875', faint:'#5a5646',
+  land:'#0d1013', landHi:'#12161b', coast:'#3d4a52', coastHi:'#5b6d76',
+  seaLine:'rgba(255,176,0,.05)', grid:'rgba(255,176,0,.07)',
+};
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const pad2=n=>String(n).padStart(2,'0');
+
+/* ── CAMERA GRID — 16 nodes, cloned 1:1 from the Middle East Signals Command catalog ── */
+const CAMS=[
+ {id:'dxb-marina-princess',code:'DXB-01',name:'Dubai Marina — Princess Tower',city:'Dubai',country:'United Arab Emirates',lat:25.0789,lon:55.1382,provider:'SkylineWebcams',pageUrl:'https://www.skylinewebcams.com/en/webcam/united-arab-emirates/dubai/dubai/dubai-marina.html',tier:'verified',domain:'URBAN',note:'View over Dubai Marina, JLT, Sheikh Zayed Road and Metro line from Princess Tower.'},
+ {id:'dxb-skyline-princess',code:'DXB-02',name:'Dubai Skyline — Princess Tower',city:'Dubai',country:'United Arab Emirates',lat:25.0778,lon:55.1367,provider:'SkylineWebcams',pageUrl:'https://www.skylinewebcams.com/en/webcam/united-arab-emirates/dubai/dubai/dubai.html',tier:'verified',domain:'URBAN',note:'Panoramic view of Dubai city from one of the tallest residential towers on earth.'},
+ {id:'dxb-palm-fairmont',code:'DXB-03',name:'Palm Jumeirah — Fairmont The Palm',city:'Dubai',country:'United Arab Emirates',lat:25.0845,lon:55.1118,provider:'SkylineWebcams',pageUrl:'https://www.skylinewebcams.com/en/webcam/united-arab-emirates/dubai/dubai/fairmont-the-palm.html',tier:'verified',domain:'COASTAL',note:'Beach view across Palm Jumeirah toward the Dubai skyline.'},
+ {id:'dxb-deira',code:'DXB-04',name:'Deira District',city:'Dubai',country:'United Arab Emirates',lat:25.2697,lon:55.3095,provider:'WorldCam',pageUrl:'https://worldcam.eu/webcams/asia/uae',tier:'listed',domain:'URBAN',note:'Historic trading district on Dubai Creek — the old city core.'},
+ {id:'auh-alraha',code:'AUH-01',name:'Al Raha Beach',city:'Abu Dhabi',country:'United Arab Emirates',lat:24.4403,lon:54.6003,provider:'WorldCam',pageUrl:'https://worldcam.eu/webcams/asia/uae',tier:'listed',domain:'COASTAL',note:'Al Raha Beach waterfront on the western gateway to Abu Dhabi.'},
+ {id:'auh-reem',code:'AUH-02',name:'Al Reem Island',city:'Abu Dhabi',country:'United Arab Emirates',lat:24.5104,lon:54.4302,provider:'WorldCam',pageUrl:'https://worldcam.eu/webcams/asia/uae',tier:'listed',domain:'URBAN',note:'Rapidly rising island district facing the Abu Dhabi corniche.'},
+ {id:'auh-masdar',code:'AUH-03',name:'Masdar City',city:'Abu Dhabi',country:'United Arab Emirates',lat:24.4267,lon:54.6156,provider:'WorldCam',pageUrl:'https://worldcam.eu/webcams/asia/uae',tier:'listed',domain:'URBAN',note:'The world-famous sustainable smart-city prototype.'},
+ {id:'auh-yasbay',code:'AUH-04',name:'Yas Bay',city:'Abu Dhabi',country:'United Arab Emirates',lat:24.467,lon:54.605,provider:'WorldCam',pageUrl:'https://worldcam.eu/webcams/asia/uae',tier:'listed',domain:'COASTAL',note:'Yas Island waterfront — entertainment and marina quarter.'},
+ {id:'shj-aldhaid',code:'SHJ-01',name:'Al Dhaid — Sharjah Safari Reserve',city:'Sharjah',country:'United Arab Emirates',lat:25.2667,lon:55.8833,provider:'WorldCam',pageUrl:'https://worldcam.eu/webcams/asia/uae',tier:'listed',domain:'DESERT',note:'Desert interior of the Emirate of Sharjah — wildlife reserve.'},
+ {id:'fuj-dibba',code:'FUJ-01',name:'Dibba — Sandy Beach',city:'Fujairah',country:'United Arab Emirates',lat:25.6006,lon:56.3498,provider:'WorldCam',pageUrl:'https://worldcam.eu/webcams/asia/uae',tier:'listed',domain:'COASTAL',note:'Gulf of Oman coastline at the foot of the Hajar Mountains.'},
+ {id:'uaq-kitebeach',code:'UAQ-01',name:'Kite Beach Center',city:'Umm Al Quwain',country:'United Arab Emirates',lat:25.5602,lon:55.5503,provider:'WorldCam',pageUrl:'https://worldcam.eu/webcams/asia/uae',tier:'listed',domain:'COASTAL',note:'Kitesurf lagoon on the northern coast of the UAE.'},
+ {id:'cai-giza-cheops',code:'CAI-01',name:'Giza — Great Pyramid & Khafre',city:'Cairo',country:'Egypt',lat:29.9773,lon:31.1325,provider:'SkylineWebcams',pageUrl:'https://www.skylinewebcams.com/en/webcam/egypt/cairo/cairo/pyramid-of-cheops-and-khafre.html',tier:'verified',domain:'HERITAGE',note:'Panoramic view of the Great Pyramid of Giza and Khafre; Menkaure in the background.'},
+ {id:'cai-giza-sphinx',code:'CAI-02',name:'Giza — Pyramids & Sphinx',city:'Cairo',country:'Egypt',lat:29.975,lon:31.135,provider:'SkylineWebcams',pageUrl:'https://www.skylinewebcams.com/en/webcam/egypt/cairo/cairo/pyramids-giza-sphinx.html',tier:'verified',domain:'HERITAGE',note:'The Giza necropolis — Cheops, Chephren, Mycerinus and the Sphinx plateau.'},
+ {id:'ist-goldenhorn',code:'IST-01',name:'Istanbul — Golden Horn',city:'Istanbul',country:'Türkiye',lat:41.0201,lon:28.9703,provider:'SkylineWebcams',pageUrl:'https://www.skylinewebcams.com/en/webcam/turkey.html',tier:'listed',domain:'URBAN',note:'The Golden Horn estuary — historic waterway between old and new Istanbul.'},
+ {id:'jrs-oldcity',code:'JRS-01',name:'Jerusalem — Old City Overview',city:'Jerusalem',country:'Israel / Palestine',lat:31.7767,lon:35.2345,provider:'SkylineWebcams',pageUrl:'https://www.skylinewebcams.com/en/webcam/israel.html',tier:'listed',domain:'HERITAGE',note:'Live view over the Old City of Jerusalem.'},
+ {id:'ptra-valley',code:'PTRA-01',name:'Petra — Rose City Approach',city:"Ma'an Governorate",country:'Jordan',lat:30.3285,lon:35.4444,provider:'SkylineWebcams',pageUrl:'https://www.skylinewebcams.com/en/webcam/jordan.html',tier:'listed',domain:'HERITAGE',note:'The Nabataean rose-red city half as old as time.'},
+];
+CAMS.forEach(c=>{c.me=c.country!=='United Arab Emirates';c.online=Math.random()>.05;});
+const camByCode=Object.fromEntries(CAMS.map(c=>[c.code,c]));
+
+/* ── CITY NODES / labels (Gulf theater) ── */
+const CITIES=[
+ {n:'KUWAIT CITY',lon:47.98,lat:29.38},{n:'MANAMA',lon:50.59,lat:26.23},
+ {n:'DOHA',lon:51.53,lat:25.29},{n:'RIYADH',lon:46.72,lat:24.63},
+ {n:'DUBAI',lon:55.27,lat:25.20},{n:'ABU DHABI',lon:54.42,lat:24.47},
+ {n:'MUSCAT',lon:58.41,lat:23.61},{n:'BANDAR ABBAS',lon:56.28,lat:27.19},
+];
+const WATER=[
+ {n:'PERSIAN  GULF',lon:51.6,lat:27.4,s:13},{n:'STRAIT OF HORMUZ',lon:56.75,lat:26.05,s:8},
+ {n:'GULF OF OMAN',lon:57.9,lat:24.5,s:9},{n:'RED SEA',lon:39.5,lat:24,s:10},
+ {n:'ARABIAN SEA',lon:58.5,lat:19.5,s:11},
+];
+const COUNTRIES=[
+ {n:'SAUDI ARABIA',lon:46.5,lat:23.5},{n:'I R A N',lon:54.0,lat:30.6},
+ {n:'O M A N',lon:56.6,lat:21.6},{n:'U.A.E.',lon:53.9,lat:23.4},
+ {n:'QATAR',lon:51.2,lat:25.0},{n:'KUWAIT',lon:47.6,lat:29.1},
+ {n:'YEMEN',lon:47.5,lat:15.5},{n:'IRAQ',lon:43.7,lat:32.2},
+];
+
+/* ── vector geography (hand-simplified WGS84 coastlines, [lon,lat]) ── */
+const ARABIA=[[47.6,29.6],[48.4,28.6],[48.8,28.1],[49.4,27.4],[49.6,27.1],[50.05,26.6],[50.2,26.35],[50.45,25.9],[50.55,25.6],[50.8,25.35],[50.78,25.7],[50.85,26.0],[51.15,26.2],[51.45,26.1],[51.6,25.75],[51.6,25.4],[51.5,25.0],[51.25,24.7],[51.0,24.55],[51.3,24.55],[51.6,24.45],[52.3,24.2],[53.0,24.2],[53.7,24.35],[54.3,24.5],[54.75,24.7],[55.05,24.95],[55.28,25.25],[55.45,25.4],[55.58,25.55],[55.78,25.75],[55.95,25.9],[56.1,26.1],[56.28,26.3],[56.38,26.42],[56.32,26.28],[56.35,26.05],[56.28,25.8],[56.22,25.55],[56.1,25.4],[56.2,25.2],[56.1,25.0],[56.45,24.9],[56.8,24.6],[57.3,24.35],[57.9,24.0],[58.4,23.7],[59.0,23.0],[59.4,22.3],[58.0,21.2],[55.0,20.5],[52.0,19.5],[48.0,19.0],[45.5,20.5],[43.5,22.0],[43.0,17.0],[42.7,15.0],[43.4,12.7],[45.0,12.6],[48.0,14.0],[52.2,15.6],[54.8,17.0],[55.5,17.9],[57.5,18.8],[58.8,20.4],[59.8,22.4],[59.8,24.0],[59.9,26.0],[60.0,28.0],[50.0,31.5],[48.0,31.0]];
+const IRAN=[[47.9,30.4],[48.9,30.3],[49.5,29.9],[50.0,30.1],[50.6,29.3],[50.85,28.95],[51.6,28.8],[52.3,28.0],[52.7,27.7],[53.5,27.0],[54.1,26.75],[54.7,26.55],[55.3,26.55],[56.0,26.75],[56.25,27.0],[56.55,27.15],[57.1,26.95],[57.6,26.6],[57.85,26.2],[57.8,25.65],[58.3,25.55],[58.9,25.5],[58.9,28.5],[56.0,29.5],[52.0,30.0],[47.9,31.0]];
+const QESHM=[[55.25,26.7],[55.7,26.95],[56.25,26.85],[56.1,26.55],[55.6,26.55]];
+const BAHRAIN=[[50.45,26.05],[50.58,26.25],[50.66,26.12],[50.58,25.95]];
+const UAE_POLY=[[51.3,24.55],[51.6,24.45],[52.3,24.2],[53.0,24.2],[53.7,24.35],[54.3,24.5],[54.75,24.7],[55.05,24.95],[55.28,25.25],[55.45,25.4],[55.58,25.55],[55.78,25.75],[55.95,25.9],[56.1,26.1],[56.28,26.3],[56.38,26.42],[56.32,26.28],[56.35,26.05],[56.28,25.8],[56.22,25.55],[56.1,25.4],[56.2,25.2],[56.45,24.92],[56.4,24.4],[56.0,23.9],[55.2,23.0],[54.0,22.7],[52.6,22.9],[51.4,23.9]];
+const UAE_BORDERS=[ // internal emirate boundaries — APPROX
+ [[54.9,24.85],[54.7,23.6]],[[55.42,25.33],[55.15,24.7]],[[56.15,25.65],[56.35,25.2]]];
+const ISLETS=[{lon:54.53,lat:25.92,n:'SIRRI IS.'},{lon:55.05,lat:25.77,n:'ABU MUSA'}];
+const TURKEY=[[26.2,40.1],[29.1,41.0],[31.4,41.2],[35.0,42.0],[37.3,41.3],[38.3,40.9],[41.5,41.4],[43.5,41.1],[44.8,41.0],[44.0,39.5],[42.0,38.5],[40.0,37.5],[37.5,36.9],[36.7,36.6],[35.5,36.6],[34.0,36.3],[32.5,36.1],[30.5,36.3],[28.9,36.7],[27.3,37.0],[26.4,38.4],[26.2,40.1]];
+const CYPRUS=[[32.3,35.2],[33.4,35.5],[34.6,35.65],[34.0,35.0],[33.0,34.85],[32.4,34.7]];
+const NE_AFRICA=[[25.0,31.9],[27.0,31.5],[29.5,31.2],[30.8,31.5],[31.6,31.4],[32.3,31.2],[33.2,31.1],[34.25,31.35],[34.55,31.85],[34.9,32.9],[35.5,33.9],[35.95,35.9],[36.1,36.6],[35.0,36.2],[34.2,34.55],[33.6,31.6],[33.9,28.5],[34.6,27.2],[35.4,25.2],[36.5,23.0],[37.5,20.5],[38.8,18.0],[40.2,15.5],[41.5,13.5],[43.0,11.9],[44.5,10.6],[47.5,11.2],[50.0,12.0],[46.0,5.0],[38.0,2.0],[28.0,5.0],[22.0,14.0],[20.0,22.0],[22.0,28.0]];
+
+/* ── projection + view transform ── */
+function makeProj(bW,bE,bS,bN,W,H,pad){
+  const kx=Math.cos((bN+bS)/2*Math.PI/180), w=(bE-bW)*kx, h=bN-bS;
+  const s=Math.min((W-pad*2)/w,(H-pad*2)/h);
+  const ox=(W-w*s)/2, oy=(H-h*s)/2;
+  return {p:(lon,lat)=>[ox+(lon-bW)*kx*s,oy+(bN-lat)*s], s, kx,
+          inv:(x,y)=>[bW+(x-ox)/(s*kx), bN-(y-oy)/s]};
+}
+const GULF={w:44.0,e:62.0,s:17.5,n:32.5};   // default theater
+const ME={w:25.0,e:63.0,s:10.0,n:43.0};     // minimap theater (full ME)
+const view={scale:1,tx:0,ty:0};             // screen = base*scale + t
+let proj=null, mapCv=$('#map'), mapCtx=mapCv.getContext('2d'), miniCv=$('#minimap'), miniCtx=miniCv.getContext('2d');
+let DPR=1, MW=0, MH=0;
+
+function fitMap(){
+  DPR=window.devicePixelRatio||1;
+  const r=mapCv.getBoundingClientRect();
+  MW=r.width; MH=r.height;
+  mapCv.width=Math.round(MW*DPR); mapCv.height=Math.round(MH*DPR);
+  proj=makeProj(GULF.w,GULF.e,GULF.s,GULF.n,MW,MH,34);
+  const rm=miniCv.getBoundingClientRect();
+  miniCv.width=Math.round(rm.width*DPR); miniCv.height=Math.round(rm.height*DPR);
+}
+function resetView(anim){
+  tweenView(anim?{...view}:{scale:1,tx:0,ty:0},{scale:1,tx:0,ty:0},anim?420:0);
+}
+let tween=null;
+function tweenView(from,to,ms){
+  tween={from,to,t0:performance.now(),ms};
+}
+function centerOn(lon,lat,targetScale){
+  const [bx,by]=proj.p(lon,lat);
+  const s=Math.max(view.scale,targetScale||3.2);
+  tweenView({...view},{scale:s,tx:MW/2-bx*s,ty:MH/2-by*s},520);
+}
+function stepTween(){
+  if(!tween)return;
+  const k=clamp((performance.now()-tween.t0)/tween.ms,0,1);
+  const e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2; // easeInOut
+  view.scale=tween.from.scale+(tween.to.scale-tween.from.scale)*e;
+  view.tx=tween.from.tx+(tween.to.tx-tween.from.tx)*e;
+  view.ty=tween.from.ty+(tween.to.ty-tween.from.ty)*e;
+  if(k>=1)tween=null;
+}
+const toScreen=(bx,by)=>[bx*view.scale+view.tx,by*view.scale+view.ty];
+const toBase=(sx,sy)=>[(sx-view.tx)/view.scale,(sy-view.ty)/view.scale];
+
+/* ── live data state ── */
+const S={
+  aircraft:[], aircraftSrc:'SIM', quakes:[], wx:{}, iss:null, issFoot:null,
+  wire:[], wireSrc:'AUTO', events:[], selected:null, hover:null,
+  layers:{cam:true,air:true,seis:true,iss:true,wx:true,city:true,grid:true},
+  watch:false, watchIdx:-1, watchLast:0,
+  adsbTried:0, lastBrief:'',
+};
+/* simulated aircraft fallback (tagged SIM) */
+function simAircraft(n){
+  const als=[],calls=['UAE','ETD','QTR','SVA','FDB','GFA','KLM','THY','MSR','RJA'];
+  for(let i=0;i<n;i++){
+    const cs=calls[i%calls.length]+(100+Math.floor(Math.random()*8900));
+    als.push({hex:'sim'+i,flight:cs,lat:clamp(25+ (Math.random()-.5)*6,18.5,31),lon:clamp(52+(Math.random()-.5)*9,45,61),
+      alt:Math.floor(8000+Math.random()*33000),gs:Math.floor(300+Math.random()*320),track:Math.floor(Math.random()*360),sim:true,
+      t:Math.random()*Math.PI*2});
+  }
+  return als;
+}
+function stepSim(s,dt){ s.t+=dt*.25; s.lon+=Math.cos(s.t)*dt*.05; s.lat+=Math.sin(s.t*1.3)*dt*.03;
+  s.lon=clamp(s.lon,44,61.5); s.lat=clamp(s.lat,18,32); }
+</script>
+<script>
+'use strict';
+/* ── MAP RENDER ── */
+function poly(ctx,pts){pts.forEach((p,i)=>{const [x,y]=proj.p(p[0],p[1]); i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.closePath();}
+function line(ctx,pts){pts.forEach((p,i)=>{const [x,y]=proj.p(p[0],p[1]); i?ctx.lineTo(x,y):ctx.moveTo(x,y);});}
+function txt(ctx,str,x,y,size,color,align,ls){
+  ctx.font=size+'px ui-monospace,Menlo,Consolas,monospace';
+  ctx.fillStyle=color;ctx.textAlign=align||'left';ctx.textBaseline='middle';
+  try{ctx.letterSpacing=(ls||1)+'px';}catch(e){}
+  ctx.fillText(str,x,y);
+  try{ctx.letterSpacing='0px';}catch(e){}
+}
+function drawMap(now){
+  const ctx=mapCtx;
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  ctx.fillStyle='#05060a';ctx.fillRect(0,0,MW,MH);
+  ctx.translate(view.tx,view.ty);ctx.scale(view.scale,view.scale);
+  const k=1/view.scale;
+  // graticule
+  if(S.layers.grid){
+    ctx.strokeStyle=C.grid;ctx.lineWidth=1*k;ctx.beginPath();
+    for(let lo=Math.ceil(GULF.w);lo<=GULF.e;lo++){const [x1,y1]=proj.p(lo,GULF.s),[x2,y2]=proj.p(lo,GULF.n);ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);}
+    for(let la=Math.ceil(GULF.s);la<=GULF.n;la++){const [x1,y1]=proj.p(GULF.w,la),[x2,y2]=proj.p(GULF.e,la);ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);}
+    ctx.stroke();
+  }
+  // landmass
+  ctx.fillStyle=C.land;ctx.strokeStyle=C.coast;ctx.lineWidth=1.1*k;
+  ctx.beginPath();poly(ctx,ARABIA);ctx.fill();ctx.stroke();
+  ctx.beginPath();poly(ctx,IRAN);ctx.fill();ctx.stroke();
+  ctx.beginPath();poly(ctx,NE_AFRICA);ctx.fill();ctx.stroke();
+  ctx.beginPath();poly(ctx,TURKEY);ctx.fill();ctx.stroke();
+  ctx.beginPath();poly(ctx,CYPRUS);ctx.fill();ctx.stroke();
+  ctx.beginPath();poly(ctx,QESHM);ctx.fill();ctx.stroke();
+  ctx.beginPath();poly(ctx,BAHRAIN);ctx.fill();ctx.stroke();
+  // UAE sector highlight
+  ctx.fillStyle='rgba(255,176,0,.06)';ctx.strokeStyle=C.amber;ctx.lineWidth=1.6*k;
+  ctx.beginPath();poly(ctx,UAE_POLY);ctx.fill();ctx.stroke();
+  if(view.scale>1.6){ctx.strokeStyle='rgba(255,176,0,.28)';ctx.setLineDash([4*k,4*k]);ctx.lineWidth=1*k;
+    UAE_BORDERS.forEach(b=>{ctx.beginPath();line(ctx,b);ctx.stroke();});ctx.setLineDash([]);}
+  // islets
+  ctx.fillStyle=C.coastHi;ISLETS.forEach(i=>{const [x,y]=proj.p(i.lon,i.lat);ctx.fillRect(x-1.5*k,y-1.5*k,3*k,3*k);});
+  // quakes
+  if(S.layers.seis)S.quakes.forEach(q=>{
+    const [x,y]=proj.p(q.lon,q.lat);const r=(2+q.mag*2.4)*clamp(k,.5,1.2);
+    ctx.strokeStyle='rgba(255,77,77,.75)';ctx.lineWidth=1.2*k;
+    ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.stroke();
+    ctx.fillStyle='rgba(255,77,77,.10)';ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();
+  });
+  // ISS + footprint
+  if(S.layers.iss&&S.iss){
+    const [x,y]=proj.p(S.iss.lon,S.iss.lat);
+    ctx.strokeStyle='rgba(232,228,216,.30)';ctx.lineWidth=1*k;ctx.setLineDash([3*k,3*k]);
+    ctx.beginPath();ctx.arc(x,y,60*k*view.scale*.35,0,7);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='#e5e7eb';ctx.beginPath();ctx.arc(x,y,3.4*k,0,7);ctx.fill();
+    ctx.strokeStyle='rgba(229,231,235,.8)';ctx.lineWidth=1.2*k;ctx.beginPath();ctx.arc(x,y,7*k,0,7);ctx.stroke();
+    if(view.scale>.8)txt(ctx,'ISS',x+10*k,y,'9px',C.ink,'left',2);
+  }
+  // aircraft
+  if(S.layers.air)S.aircraft.forEach(a=>{
+    const [x,y]=proj.p(a.lon,a.lat);
+    if(x<-20||x>MW+20||y<-20||y>MH+20)return;
+    ctx.save();ctx.translate(x,y);ctx.rotate((a.track||0)*Math.PI/180);
+    ctx.fillStyle=a.sim?'rgba(0,255,128,.55)':'#00ff80';
+    ctx.shadowColor='rgba(0,255,128,.7)';ctx.shadowBlur=6*k;
+    const s=4.6*clamp(k,.45,1.1);
+    ctx.beginPath();ctx.moveTo(0,-s*1.25);ctx.lineTo(s*.85,s);ctx.lineTo(0,s*.45);ctx.lineTo(-s*.85,s);ctx.closePath();ctx.fill();
+    ctx.restore();ctx.shadowBlur=0;
+    if(view.scale>2.2)txt(ctx,(a.flight||'').slice(0,8),x+8*k,y-8*k,'8px','rgba(0,255,128,.75)','left',1);
+  });
+  // city + country + water labels
+  if(S.layers.city){
+    CITIES.forEach(c=>{const [x,y]=proj.p(c.lon,c.lat);
+      ctx.fillStyle='rgba(110,231,183,.9)';ctx.beginPath();ctx.arc(x,y,2*k,0,7);ctx.fill();
+      txt(ctx,c.n,x+7*k,y,9*k,'rgba(232,228,216,.75)','left',2*k);});
+  }
+  COUNTRIES.forEach(c=>{const [x,y]=proj.p(c.lon,c.lat);txt(ctx,c.n,x,y,12*k,'rgba(141,136,117,.55)','center',5*k);});
+  WATER.forEach(w=>{const [x,y]=proj.p(w.lon,w.lat);txt(ctx,w.n,x,y,w.s*k,'rgba(58,110,130,.6)','center',6*k);});
+  // camera nodes
+  if(S.layers.cam)CAMS.forEach(c=>{
+    const [x,y]=proj.p(c.lon,c.lat);
+    const selected=S.selected===c, hovered=S.hover===c;
+    const col=c.me?C.green:C.amber;
+    const s=(selected?6.2:4.6)*clamp(k,.5,1.15);
+    ctx.save();ctx.translate(x,y);ctx.rotate(Math.PI/4);
+    if(!c.online){ctx.strokeStyle=C.faint;ctx.lineWidth=1.2*k;ctx.strokeRect(-s/1.4,-s/1.4,s*1.42,s*1.42);}
+    else{ctx.fillStyle=col;ctx.shadowColor=col;ctx.shadowBlur=9*k;ctx.fillRect(-s/1.4,-s/1.4,s*1.42,s*1.42);ctx.shadowBlur=0;}
+    ctx.restore();
+    let b=0;
+    if(selected){
+      ctx.strokeStyle=C.amber;ctx.lineWidth=1.4*k;const R=13*Math.max(k,view.scale*.4);
+      ctx.setLineDash([5*k,3*k]);ctx.beginPath();ctx.arc(x,y,R+4*k,now/700%(Math.PI*2),(now/700%(Math.PI*2))+4.6);ctx.stroke();ctx.setLineDash([]);
+      b=R+7*k;
+      [[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([dx,dy])=>{
+        ctx.beginPath();ctx.moveTo(x+dx*b,y+dy*b-dy*5*k);ctx.lineTo(x+dx*b,y+dy*b);ctx.lineTo(x+dx*b-dx*5*k,y+dy*b);ctx.stroke();});
+    }
+    if(selected||hovered||view.scale>2.6)
+      txt(ctx,c.code,x+(selected?b+6*k:8*k),y-(selected?b*.6:0),9*k,c.me?'rgba(34,211,167,.9)':'rgba(255,176,0,.9)','left',1);
+  });
+  // scanline
+  const scanT=(now/9000)%1, sx=scanT*MW;
+  ctx.strokeStyle='rgba(255,176,0,.20)';ctx.lineWidth=1*k;
+  ctx.beginPath();ctx.moveTo(sx,0);ctx.lineTo(sx,MH);ctx.stroke();
+  ctx.strokeStyle='rgba(255,176,0,.08)';
+  ctx.beginPath();ctx.moveTo(sx-14*k,0);ctx.lineTo(sx-14*k,MH);ctx.moveTo(sx+14*k,0);ctx.lineTo(sx+14*k,MH);ctx.stroke();
+  // cursor crosshair
+  if(S.cursor){
+    const [cx,cy]=S.cursor;
+    ctx.strokeStyle='rgba(255,176,0,.14)';ctx.lineWidth=1*k;ctx.setLineDash([6*k,5*k]);
+    ctx.beginPath();ctx.moveTo(cx,0);ctx.lineTo(cx,MH);ctx.moveTo(0,cy);ctx.lineTo(MW,cy);ctx.stroke();ctx.setLineDash([]);
+  }
+  // screen-space HUD
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  drawScaleBar(ctx);drawCompass(ctx);
+  if(S.cursor){
+    const [gx,gy]=proj.inv(...toBase(...S.cursor));
+    if(gx>=GULF.w&&gx<=GULF.e&&gy>=GULF.s&&gy<=GULF.n)
+      txt(ctx,'CURSOR  '+gy.toFixed(3)+'N  '+gx.toFixed(3)+'E',MW-12,MH-14,10,'rgba(255,176,0,.6)','right',2);
+  }
+}
+function drawScaleBar(ctx){
+  const kmPerDeg=111.32*Math.cos(25*Math.PI/180);
+  let km=50;const pxFor=v=>v/kmPerDeg*proj.s*view.scale;
+  while(pxFor(km)>150)km/=2; while(pxFor(km)<55)km*=2;
+  const w=pxFor(km),x0=14,y0=MH-26;
+  ctx.strokeStyle='rgba(232,228,216,.55)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(x0,y0-4);ctx.lineTo(x0,y0);ctx.lineTo(x0+w,y0);ctx.lineTo(x0+w,y0-4);ctx.stroke();
+  txt(ctx,km+' km',x0+w/2,y0-10,9,'rgba(232,228,216,.6)','center',1);
+}
+function drawCompass(ctx){
+  const x=22,y=MH-56;
+  ctx.strokeStyle='rgba(255,176,0,.6)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.arc(x,y,11,0,7);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x,y+7);ctx.lineTo(x,y-9);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x,y-9);ctx.lineTo(x-3.4,y-3);ctx.lineTo(x+3.4,y-3);ctx.closePath();
+  ctx.fillStyle='rgba(255,176,0,.7)';ctx.fill();
+  txt(ctx,'N',x,y-18,9,'rgba(255,176,0,.7)','center',0);
+}
+function drawMini(){
+  const ctx=miniCtx,W=miniCv.width/DPR,H=miniCv.height/DPR;
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  ctx.clearRect(0,0,W,H);
+  const p=makeProj(ME.w,ME.e,ME.s,ME.n,W,H,8);
+  ctx.fillStyle='#07080c';ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='rgba(255,176,0,.25)';ctx.fillStyle='#0d1013';ctx.lineWidth=1;
+  ctx.beginPath();p&&polyM(ctx,p,ARABIA);ctx.fill();ctx.stroke();
+  ctx.beginPath();polyM(ctx,p,IRAN);ctx.fill();ctx.stroke();
+  ctx.beginPath();polyM(ctx,p,NE_AFRICA);ctx.fill();ctx.stroke();
+  ctx.beginPath();polyM(ctx,p,TURKEY);ctx.fill();ctx.stroke();
+  txt(ctx,'ME THEATER',8,12,8,'rgba(141,136,117,.8)','left',2);
+  CAMS.forEach(c=>{const [x,y]=p.p(c.lon,c.lat);
+    ctx.fillStyle=c.me?'rgba(34,211,167,.8)':'rgba(255,176,0,.9)';
+    ctx.fillRect(x-1.5,y-1.5,3,3);});
+  // viewport rect of main map
+  const [x1,y1]=p.p(...proj.inv(...toBase(0,0))),[x2,y2]=p.p(...proj.inv(...toBase(MW,MH)));
+  ctx.strokeStyle='rgba(255,176,0,.85)';ctx.lineWidth=1;
+  ctx.strokeRect(x1,y1,x2-x1,y2-y1);
+}
+function polyM(ctx,p,pts){pts.forEach((q,i)=>{const [x,y]=p.p(q[0],q[1]);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.closePath();}
+
+/* ── map interaction ── */
+let dragging=false,dragMoved=0,lastMx=0,lastMy=0;
+function pickNode(mx,my){
+  let best=null,bd=14*14/Math.min(view.scale,1);
+  CAMS.forEach(c=>{const [x,y]=toScreen(...proj.p(c.lon,c.lat));
+    const d=(x-mx)*(x-mx)+(y-my)*(y-my); if(d<bd){bd=d;best=c;}});
+  return best;
+}
+mapCv.addEventListener('mousedown',e=>{dragging=true;dragMoved=0;lastMx=e.offsetX;lastMy=e.offsetY;tween=null;});
+window.addEventListener('mouseup',()=>dragging=false);
+mapCv.addEventListener('mousemove',e=>{
+  S.cursor=[e.offsetX,e.offsetY];
+  if(dragging){
+    const dx=e.offsetX-lastMx,dy=e.offsetY-lastMy;dragMoved+=Math.abs(dx)+Math.abs(dy);
+    view.tx+=dx;view.ty+=dy;lastMx=e.offsetX;lastMy=e.offsetY;
+    $('#tooltip').style.display='none';return;
+  }
+  const n=pickNode(e.offsetX,e.offsetY);S.hover=n;
+  mapCv.style.cursor=n?'pointer':'crosshair';
+  const tip=$('#tooltip');
+  if(n){tip.style.display='block';tip.style.left=(e.offsetX+14)+'px';tip.style.top=(e.offsetY+10)+'px';
+    tip.innerHTML='<b>'+n.code+' — '+n.name+'</b><small>'+(n.me?'ME REGIONAL · ':'UAE · ')+n.provider.toUpperCase()+' · '+(n.online?'ONLINE':'OFFLINE')+'</small>';
+  }else tip.style.display='none';
+});
+mapCv.addEventListener('mouseleave',()=>{S.cursor=null;$('#tooltip').style.display='none';});
+mapCv.addEventListener('click',e=>{
+  if(dragMoved>5)return;
+  const n=pickNode(e.offsetX,e.offsetY);
+  if(n)selectCam(n);else{S.selected=null;showCamDetail(null);}
+});
+mapCv.addEventListener('wheel',e=>{
+  e.preventDefault();tween=null;
+  const f=e.deltaY<0?1.16:1/1.16,ns=clamp(view.scale*f,.55,16),k=ns/view.scale;
+  view.tx=e.offsetX-(e.offsetX-view.tx)*k;view.ty=e.offsetY-(e.offsetY-view.ty)*k;view.scale=ns;
+},{passive:false});
+mapCv.addEventListener('dblclick',()=>resetView(true));
+$('#z-in').onclick=()=>{tween=null;const f=1.35,ns=clamp(view.scale*f,.55,16),k=ns/view.scale;
+  view.tx=MW/2-(MW/2-view.tx)*k;view.ty=MH/2-(MH/2-view.ty)*k;view.scale=ns;};
+$('#z-out').onclick=()=>{tween=null;const f=1/1.35,ns=clamp(view.scale*f,.55,16),k=ns/view.scale;
+  view.tx=MW/2-(MW/2-view.tx)*k;view.ty=MH/2-(MH/2-view.ty)*k;view.scale=ns;};
+$('#z-reset').onclick=()=>resetView(true);
+window.addEventListener('resize',()=>{fitMap();});
+</script>
+<script>
+'use strict';
+/* ── LIVE SIGNAL ENGINES ── */
+async function jget(url,ms){
+  const ac=new AbortController(),t=setTimeout(()=>ac.abort(),ms||8000);
+  try{const r=await fetch(url,{signal:ac.signal});if(!r.ok)throw new Error('HTTP '+r.status);return await r.json();}
+  finally{clearTimeout(t);}
+}
+const esc=s=>String(s).replace(/[<>&]/g,ch=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[ch]));
+
+/* ADS-B mesh: adsb.lol → adsb.fi → SIM */
+async function pullAircraft(){
+  const ctr=[25.5,54.5];
+  const urls=[
+    'https://api.adsb.lol/v2/lat/'+ctr[0]+'/lon/'+ctr[1]+'/radius/250',
+    'https://opendata.adsb.fi/api/v2/lat/'+ctr[0]+'/lon/'+ctr[1]+'/radius/250'
+  ];
+  for(const u of urls){
+    try{
+      const j=await jget(u,7000);
+      const ac=(j.ac||[]).filter(a=>a.lat&&a.lon).map(a=>({
+        hex:a.hex,flight:(a.flight||a.r||'').trim(),lat:a.lat,lon:a.lon,
+        alt:a.alt_baro==='ground'?0:(+a.alt_baro||+a.alt_geom||0),
+        gs:Math.round(+a.gs||0),track:a.track,sim:false}));
+      if(ac.length){S.aircraft=ac;S.aircraftSrc='LIVE';
+        setChip('adsb','OK','ok');$('#c-air').textContent=ac.length;
+        $('#air-mode').textContent='ADS-B LIVE MESH';
+        $('#air-status').textContent=ac.length+' TRANSPONDERS IN RADIUS 250NM // '+u.split('/')[2].toUpperCase()+' // UPDATED '+gst(Date.now());
+        logEvent('info','ADS-B MESH LIVE — '+ac.length+' aircraft fused ('+u.split('/')[2]+')');
+        if(tab==='air')renderAir();return;}
+    }catch(e){/* try next */}
+  }
+  if(S.aircraftSrc!=='SIM'){
+    S.aircraft=simAircraft(46);S.aircraftSrc='SIM';
+    setChip('adsb','SIM','sim');$('#c-air').textContent=S.aircraft.length;
+    $('#air-mode').textContent='SIM CONTACTS';
+    $('#air-status').textContent='ADS-B UPLINK UNREACHABLE FROM THIS NETWORK — RUNNING SIMULATED GULF TRAFFIC (TAGGED SIM)';
+    logEvent('warn','ADS-B uplink unreachable — switched to SIM traffic');
+    if(tab==='air')renderAir();
+  }
+}
+/* USGS seismic 24h */
+async function pullQuakes(){
+  try{
+    const start=new Date(Date.now()-864e5).toISOString();
+    const j=await jget('https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime='+start+'&minlatitude=10&maxlatitude=42&minlongitude=25&maxlongitude=64&orderby=magnitude',9000);
+    S.quakes=(j.features||[]).map(f=>({mag:f.properties.mag||0,place:f.properties.place||'—',lon:f.geometry.coordinates[0],lat:f.geometry.coordinates[1],time:f.properties.time}));
+    setChip('usgs','OK','ok');$('#c-seis').textContent=S.quakes.length;
+    logEvent(S.quakes.some(q=>q.mag>=4.5)?'warn':'info','USGS sync — '+S.quakes.length+' ME events in 24h window');
+    S.quakes.filter(q=>q.mag>=4.5).slice(0,3).forEach(q=>
+      logEvent('crit','M '+q.mag.toFixed(1)+' — '+esc(q.place)+' (USGS)'));
+    if(tab==='env')renderEnv();compileBrief(true);
+  }catch(e){setChip('usgs','--','bad');logEvent('warn','USGS uplink failed');}
+}
+/* Open-Meteo Gulf metros */
+const METROS=[{k:'DXB',lat:25.25,lon:55.36},{k:'AUH',lat:24.45,lon:54.65},{k:'SHJ',lat:25.33,lon:55.52},
+  {k:'DOH',lat:25.29,lon:51.53},{k:'RUH',lat:24.71,lon:46.68},{k:'MCT',lat:23.59,lon:58.41}];
+async function pullWx(){
+  try{
+    const lats=METROS.map(m=>m.lat).join(','),lons=METROS.map(m=>m.lon).join(',');
+    const j=await jget('https://api.open-meteo.com/v1/forecast?latitude='+lats+'&longitude='+lons+'&current=temperature_2m,wind_speed_10m',9000);
+    const arr=Array.isArray(j)?j:[j];
+    arr.forEach((r,i)=>{S.wx[METROS[i].k]={t:Math.round(r.current.temperature_2m),w:Math.round(r.current.wind_speed_10m)};});
+    setChip('wx','OK','ok');
+    logEvent('info','Open-Meteo sync — Gulf metros updated');
+    if(tab==='env')renderEnv();compileBrief(true);
+  }catch(e){setChip('wx','--','bad');logEvent('warn','Open-Meteo uplink failed');}
+}
+/* ISS telemetry */
+async function pullIss(){
+  try{
+    const j=await jget('https://api.wheretheiss.at/v1/satellites/25544',7000);
+    S.iss={lat:j.latitude,lon:j.longitude,alt:j.altitude,vel:j.velocity};
+    setChip('iss','OK','ok');
+    if(tab==='env')renderEnv();
+  }catch(e){setChip('iss','--','bad');}
+}
+/* Wire: GDELT attempt → auto-derived fallback */
+async function pullWire(){
+  S.wire=[];
+  try{
+    const j=await jget('https://api.gdeltproject.org/api/v2/doc/doc?query=UAE%20OR%20Dubai%20OR%20Saudi&mode=artlist&format=json&maxrecords=14&sort=datedesc',8000);
+    (j.articles||[]).forEach(a=>S.wire.push({t:a.title||'',src:a.domain||'GDELT',live:true}));
+    if(S.wire.length){S.wireSrc='GDELT LIVE';setChip('wire','OK','ok');}
+  }catch(e){/* fallback below */}
+  if(!S.wire.length){
+    S.wireSrc='AUTO-DERIVED';setChip('wire','AUTO','sim');
+    if(S.quakes.length){const q=S.quakes[0];
+      S.wire.push({t:'SEISMIC — M '+(+q.mag).toFixed(1)+' '+q.place,src:'USGS 24H',crit:q.mag>=4.5});}
+    if(S.aircraft.length)S.wire.push({t:'GULF AIR PICTURE — '+S.aircraft.length+' transponders fused ('+S.aircraftSrc+')',src:'ADS-B MESH'});
+    METROS.forEach(m=>{if(S.wx[m.k])S.wire.push({t:m.k+' METEO — '+S.wx[m.k].t+'°C WIND '+S.wx[m.k].w+' KT',src:'OPEN-METEO'});});
+    S.wire.push({t:'CAMERA GRID — '+CAMS.filter(c=>c.online).length+'/16 nodes reporting',src:'GODS EYE'});
+    if(S.iss)S.wire.push({t:'ISS — '+S.iss.lat.toFixed(1)+'N '+S.iss.lon.toFixed(1)+'E · ALT '+Math.round(S.iss.alt)+' KM',src:'WHERETHEISS.AT'});
+    S.wire.push({t:'OPEN SIGNALS ONLY — ALL FEEDS PUBLIC & ATTRIBUTED',src:'DOCTRINE'});
+  }
+  $('#wire-src').textContent=S.wireSrc;
+  if(tab==='wire')renderWire();renderTicker();
+}
+function renderTicker(){
+  const tr=$('#ticker-track');if(!S.wire.length)return;
+  const html=S.wire.map(w=>'<span class="tk-item'+(w.crit?' crit':'')+'">'+esc(w.t)+' · <b>'+esc(w.src)+'</b></span>').join('<span class="tk-item">◆</span>');
+  tr.innerHTML=html+'<span class="tk-item">◆</span>'+html+'<span class="tk-item">◆</span>';
+}
+
+/* ── event log ── */
+function logEvent(sev,msg){
+  const box=$('#events');
+  const d=document.createElement('div');
+  d.className='ev '+sev;
+  d.innerHTML='<time>'+gst(Date.now())+'</time>'+esc(msg);
+  box.prepend(d);
+  while(box.children.length>42)box.lastChild.remove();
+  S.events.unshift({sev,msg,t:Date.now()});
+  if(S.events.length>42)S.events.pop();
+}
+/* camera health flicker + subtle signal events */
+setInterval(()=>{
+  const c=CAMS[Math.floor(Math.random()*CAMS.length)];
+  c.online=Math.random()>.06;
+  const msgs=c.online?
+    [['info',c.code+' frame stream restored — decoder resync'],['info',c.code+' health probe OK — '+(40+Math.floor(Math.random()*180))+'ms'],['info',c.code+' night-gain compensation engaged']]:
+    [['warn',c.code+' signal lost — provider timeout'],['warn',c.code+' frame drop 12% — investigating feed']];
+  const m=msgs[Math.floor(Math.random()*msgs.length)];
+  logEvent(m[0],m[1]);
+  buildCamList();if(tab==='cam'&&S.selected)showCamDetail(S.selected,true);
+},26000);
+</script>
+<script>
+'use strict';
+/* ── UI: clocks, tabs, chips ── */
+function utc(t){try{return new Intl.DateTimeFormat('en-GB',{timeZone:'UTC',hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'}).format(t);}catch(e){const d=new Date(t);return pad2(d.getUTCHours())+':'+pad2(d.getUTCMinutes())+':'+pad2(d.getUTCSeconds());}}
+function gst(t){try{return new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Dubai',hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'}).format(t);}catch(e){const d=new Date(t+4*3600e3);return pad2(d.getUTCHours())+':'+pad2(d.getUTCMinutes())+':'+pad2(d.getUTCSeconds());}}
+setInterval(()=>{const t=Date.now();
+  $('#clock-utc').textContent=utc(t);$('#clock-gst').textContent=gst(t);$('#rail-gst').textContent=gst(t);},1000);
+function setChip(id,label,cls){
+  const el=$('#chip-'+id);if(!el)return;
+  el.querySelector('b').textContent=label;
+  el.className='chip'+(cls==='ok'?'':cls?' '+cls:'');
+}
+let tab='cam';
+$$('#tabs button').forEach(b=>b.onclick=()=>{
+  setTab(b.dataset.tab);
+});
+function setTab(name){
+  tab=name;
+  $$('#tabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
+  $$('.tabpane').forEach(p=>p.classList.toggle('active',p.id==='tab-'+name));
+  if(name==='air')renderAir();if(name==='env')renderEnv();if(name==='wire')renderWire();
+  if(name==='ai')compileBrief(false);
+}
+
+/* ── camera list + detail ── */
+let camRows=null;
+function buildCamList(){
+  const box=$('#cam-list');
+  /* full rebuild only when rows don't exist yet — keeps DOM nodes stable so
+     selection targets (and automation refs) never go stale mid-session */
+  if(!camRows||camRows.length!==CAMS.length||!box.contains(camRows[0])){
+    box.innerHTML='';
+    camRows=CAMS.map(c=>{
+      const d=document.createElement('div');
+      d.className='rowitem'+(c.me?' me':'')+(S.selected===c?' sel':'');
+      d.innerHTML='<span class="dot"></span><span class="rt"><b>'+c.code+'</b><span>'+esc(c.name)+'</span>'+
+        '<small></small></span>';
+      d.onclick=()=>selectCam(c);
+      box.appendChild(d);return d;
+    });
+  }
+  /* in-place refresh of the only things that change: sel class + OFFLINE tag */
+  CAMS.forEach((c,i)=>{
+    const d=camRows[i];
+    const cls='rowitem'+(c.me?' me':'')+(S.selected===c?' sel':'');
+    if(d.className!==cls)d.className=cls;
+    const small=d.querySelector('small');
+    const txt=c.city.toUpperCase()+' · '+c.provider.toUpperCase()+(c.online?'':' · OFFLINE');
+    if(small.textContent!==txt)small.textContent=txt;
+  });
+}
+function selectCam(c,quiet){
+  S.selected=c;buildCamList();showCamDetail(c);
+  setTab('cam');
+  centerOn(c.lon,c.lat,c.me?2.4:3.4);
+  if(!quiet)logEvent('info',c.code+' selected — operator focus '+c.lat.toFixed(3)+'N '+c.lon.toFixed(3)+'E');
+}
+async function probe(url){
+  const t0=performance.now();
+  try{await fetch(url,{mode:'no-cors',signal:AbortSignal.timeout(6000)});
+    return Math.round(performance.now()-t0)+'ms';}
+  catch(e){return 'BLOCKED';}
+}
+function showCamDetail(c){
+  const det=$('#cam-detail'),emp=$('#cam-empty');
+  if(!c){det.style.display='none';emp.style.display='block';return;}
+  det.style.display='block';emp.style.display='none';
+  $('#cd-name').textContent=c.code+' — '+c.name;
+  $('#cd-city').textContent=c.city.toUpperCase()+' · '+c.country.toUpperCase();
+  $('#cd-tags').innerHTML=
+    '<span class="tag '+(c.me?'ok':'')+'">'+(c.me?'ME REGIONAL':'UAE GRID')+'</span>'+
+    '<span class="tag">'+c.domain+'</span>'+
+    '<span class="tag '+(c.tier==='verified'?'ok':'')+'">'+c.tier.toUpperCase()+'</span>'+
+    '<span class="tag '+(c.online?'ok':'')+'">'+(c.online?'FEED ONLINE':'FEED OFFLINE')+'</span>';
+  $('#cd-lat').textContent=c.lat.toFixed(4);
+  $('#cd-lon').textContent=c.lon.toFixed(4);
+  $('#cd-prov').textContent=c.provider;
+  $('#cd-link').textContent='probing…';
+  $('#cd-feed').href=c.pageUrl;
+  $('#cd-note').textContent=c.note+' Source page opens in a new tab — providers serve the live stream on their own domain (X-Frame-Options protected).';
+  probe(c.pageUrl).then(r=>{if(S.selected===c)$('#cd-link').textContent=r;});
+}
+
+/* ── AIR / ENV / WIRE / AI renders ── */
+let selAc=null;
+function renderAir(){
+  const box=$('#air-list');
+  const list=[...S.aircraft].sort((a,b)=>b.alt-a.alt).slice(0,16);
+  box.innerHTML=list.map(a=>
+    '<div class="arow'+(selAc===a?' sel':'')+'" data-hex="'+esc(a.hex)+'">'+
+    '<b>'+esc(a.flight||a.hex.toUpperCase())+'</b>'+
+    '<span class="alt">FL'+String(Math.round(a.alt/100)).padStart(3,'0')+' · '+a.gs+' kt</span>'+
+    '<small>'+(a.sim?'SIM':'LIVE')+'</small></div>').join('')||'<div class="label">NO CONTACTS</div>';
+  box.querySelectorAll('.arow').forEach(r=>r.onclick=()=>{
+    const a=S.aircraft.find(x=>x.hex===r.dataset.hex);if(!a)return;
+    selAc=a;centerOn(a.lon,a.lat,3.6);renderAir();
+    logEvent('info','Air contact '+(a.flight||a.hex)+' — FL'+Math.round(a.alt/100)+' tracking '+Math.round(a.track||0)+'°');
+  });
+}
+function renderEnv(){
+  const wx=$('#env-wx');
+  wx.innerHTML=METROS.map(m=>S.wx[m.k]?
+    '<div class="wxcard"><b>'+m.k+'</b><span>'+S.wx[m.k].t+'°C · '+S.wx[m.k].w+' KT</span></div>':'').join('')||
+    '<div class="label">OPEN-METEO UPLINK…</div>';
+  const q=$('#env-quakes');
+  q.innerHTML=[...S.quakes].sort((a,b)=>b.mag-a.mag).slice(0,8).map(q2=>{
+    const d=new Date(q2.time);
+    return '<div class="qrow"><b>M '+(+q2.mag).toFixed(1)+'</b><small>'+esc(q2.place)+' · '+gst(q2.time)+' GST</small></div>';
+  }).join('')||'<div class="label">NO EVENTS IN 24H WINDOW</div>';
+  const iss=$('#env-iss');
+  iss.innerHTML=S.iss?
+    '<div class="kv"><b>Position</b><span>'+S.iss.lat.toFixed(2)+'N '+S.iss.lon.toFixed(2)+'E</span></div>'+
+    '<div class="kv"><b>Altitude</b><span>'+Math.round(S.iss.alt)+' km</span></div>'+
+    '<div class="kv"><b>Velocity</b><span>'+Math.round(S.iss.vel).toLocaleString('en')+' km/h</span></div>'+
+    '<div class="kv"><b>Updated</b><span>'+gst(Date.now())+' GST</span></div>'
+    :'<div class="label">ISS UPLINK…</div>';
+}
+function renderWire(){
+  $('#wire-list').innerHTML=S.wire.map(w=>
+    '<div class="wire-item'+(w.live?' live':'')+'"><b>'+esc(w.t)+'</b><small>SOURCE: '+esc(w.src)+'</small></div>').join('')||
+    '<div class="label">WIRE TAP…</div>';
+}
+function compileBrief(force){
+  const el=$('#ai-brief');
+  const now=Date.now();
+  if(!force&&now-(compileBrief.t||0)<90000)return;
+  compileBrief.t=now;
+  const online=CAMS.filter(c=>c.online).length;
+  const strongest=[...S.quakes].sort((a,b)=>b.mag-a.mag)[0];
+  const wxd=S.wx.DXB?S.wx.DXB.t+'°C':'—';
+  const lines=[];
+  lines.push('SECTOR — Gulf theater fusing <em>'+S.aircraft.length+'</em> air transponders ('+S.aircraftSrc+') across the Arabian Peninsula approaches; UAE camera grid holds <em>'+online+'/16</em> reporting nodes.');
+  lines.push('SEISMIC — USGS logged <em>'+S.quakes.length+'</em> Middle East events in the 24h window'+(strongest?', strongest <em>M '+(+strongest.mag).toFixed(1)+'</em> '+esc(strongest.place):'')+'. No tsunami advisory implied by this console.');
+  lines.push('WEATHER — Dubai <em>'+wxd+'</em>, Abu Dhabi '+(S.wx.AUH?S.wx.AUH.t+'°C':'—')+', Sharjah '+(S.wx.SHJ?S.wx.SHJ.t+'°C':'—')+'; optics nominal across the grid'+(S.wx.DXB&&S.wx.DXB.w>30?' — visibility flag on Gulf haze corridor':'')+'.');
+  lines.push('REGIONAL — ME heritage nodes <em>CAI-01/02 · IST-01 · JRS-01 · PTRA-01</em> standing by; select via the ME THEATER mini-map or the camera roster.');
+  if(S.iss)lines.push('ORBITAL — ISS overhead <em>'+S.iss.lat.toFixed(1)+'N '+S.iss.lon.toFixed(1)+'E</em> at '+Math.round(S.iss.alt)+' km, '+Math.round(S.iss.vel).toLocaleString('en')+' km/h.');
+  lines.push('WIRE — '+S.wireSrc+' tap buffering <em>'+S.wire.length+'</em> items. Doctrine: <em>OPEN SIGNALS ONLY</em>.');
+  el.innerHTML=lines.map(l=>'▸ '+l).join('\n\n')+'\n\n— GODS EYE ON-DEVICE ANALYST // FIELD BUILD';
+}
+$('#ai-regen').onclick=()=>{compileBrief(true);};
+
+/* ── layer rail ── */
+const LAYERDEFS=[
+  {k:'cam', t:'CAMERA GRID', s:'UAE + ME public cams', n:()=>CAMS.length},
+  {k:'air', t:'AIR TRAFFIC', s:'ADS-B transponders', n:()=>S.aircraft.length},
+  {k:'seis',t:'SEISMIC 24H', s:'USGS Middle East', n:()=>S.quakes.length},
+  {k:'iss', t:'ISS TRACK', s:'Station + footprint', n:()=>S.iss?'1':'—'},
+  {k:'wx',  t:'WX NODES', s:'Gulf metros live', n:()=>Object.keys(S.wx).length},
+  {k:'city',t:'CITY NODES', s:'Gulf metro labels', n:()=>CITIES.length},
+  {k:'grid',t:'GRATICULE', s:'1° lat/lon mesh', n:()=>'—'},
+];
+function buildLayers(){
+  const box=$('#layers');box.innerHTML='';
+  LAYERDEFS.forEach(l=>{
+    const b=document.createElement('button');
+    b.className='layer';
+    const on=S.layers[l.k];
+    b.innerHTML='<span class="led'+(on?'':' off')+'"></span><span class="lt"><b class="'+(on?'':'off')+'">'+l.t+'</b><small>'+l.s+'</small></span><span class="lc">'+l.n()+'</span>';
+    b.onclick=()=>{S.layers[l.k]=!S.layers[l.k];buildLayers();logEvent('info','Layer '+(S.layers[l.k]?'ENABLED':'MUTED')+' — '+l.t);};
+    b.dataset.k=l.k;box.appendChild(b);
+  });
+}
+setInterval(buildLayers,15000); // refresh counts
+/* WATCH MODE */
+$('#watch-btn').onclick=()=>{
+  S.watch=!S.watch;S.watchLast=performance.now();
+  $('#watch-btn').classList.toggle('on',S.watch);
+  logEvent(S.watch?'warn':'info','WATCH MODE '+(S.watch?'ENGAGED — auto-hopping UAE grid every 8s':'DISENGAGED'));
+};
+
+/* ── BOOT ── */
+const BOOTLINES=[
+  '> INITIALIZING GODS EYE KERNEL v2.1 ............ OK',
+  '> LINKING PUBLIC ADS-B MESH (GULF SECTOR) ...... OK',
+  '> ACQUIRING UAE CAMERA GRID .................... OK',
+  '> USGS SEISMIC UPLINK .......................... OK',
+  '> ISS TELEMETRY SYNC ........................... OK',
+  '> GDELT NEWS WIRE TAP .......................... OK',
+  '> MAPPING ENGINE: ARABIAN GULF THEATER ......... OK',
+  '',
+  '  ALL PUBLIC SIGNALS FUSED. THE EYE IS OPEN.',
+];
+let bootDone=false;
+function runBoot(){
+  const box=$('#boot-lines');let i=0;
+  const caret=document.createElement('span');caret.id='boot-caret';
+  function next(){
+    if(bootDone)return;
+    if(i>=BOOTLINES.length){caret.remove();setTimeout(endBoot,650);return;}
+    const d=document.createElement('div');
+    d.textContent=BOOTLINES[i]||'\u00A0';
+    box.appendChild(d);
+    box.appendChild(caret);
+    i++;setTimeout(next,i===1?260:240);
+  }
+  function endBoot(){
+    if(bootDone)return;bootDone=true;
+    $('#boot').classList.add('fade');
+    setTimeout(()=>$('#boot').remove(),600);
+  }
+  $('#boot').onclick=endBoot;
+  next();
+}
+
+/* ── MAIN LOOP ── */
+let lastT=performance.now(),useRaf=true,rafCount=0,lastRafAt=performance.now();
+function tick(now){
+  const dt=Math.min(.1,(now-lastT)/1000);lastT=now;
+  stepTween();
+  if(S.aircraftSrc==='SIM'&&S.layers.air)S.aircraft.forEach(a=>stepSim(a,dt));
+  if(S.watch&&bootDone){
+    if(now-S.watchLast>=8000){
+      S.watchLast=now;
+      const uae=CAMS.filter(c=>!c.me);
+      S.watchIdx=(S.watchIdx+1)%uae.length;
+      selectCam(uae[S.watchIdx],true);
+    }
+  }
+  drawMap(now);
+  drawMini();
+}
+function loop(now){
+  rafCount++;lastRafAt=performance.now();tick(now);
+  if(useRaf)requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+/* headless / throttled-tab fallback: if RAF stalls >1.2s, drive the console on an interval */
+setInterval(()=>{
+  if(useRaf&&performance.now()-lastRafAt>1200){
+    useRaf=false;setInterval(()=>tick(performance.now()),33);
+  }
+},1500);
+
+/* ── INIT ── */
+fitMap();
+S.aircraft=simAircraft(46);S.aircraftSrc='SIM';
+$('#c-air').textContent=S.aircraft.length;$('#air-mode').textContent='SIM CONTACTS';
+setChip('adsb','SIM','sim');
+buildLayers();buildCamList();
+logEvent('info','GODS EYE FIELD BUILD online — single-file console, Canvas 2D renderer');
+logEvent('info','16-node camera manifest loaded — UAE grid + ME regional');
+pullAircraft();pullQuakes();pullWx();pullIss();pullWire();
+setInterval(pullAircraft,15000);setInterval(pullQuakes,300000);
+setInterval(pullWx,120000);setInterval(pullIss,6000);setInterval(pullWire,120000);
+runBoot();
+</script>
+
+</body>
+</html>

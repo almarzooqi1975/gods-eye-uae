@@ -38,7 +38,7 @@ monospace HUD typography, CRT scanline texture). It ships in two editions:
 | **AI analyst** | On-device heuristic brief | LLM-powered situation brief (`/api/analyst`) |
 | **Best for** | Instant launch, sharing, embedding | The full cinematic experience |
 
-Both editions track the same mission picture: a **20-node Middle East camera grid with the
+Both editions track the same mission picture: a **29-node Middle East camera grid with the
 UAE at the center**, live aircraft over the Gulf, seismic events from USGS, ISS passes,
 regional weather, and a news wire — every feed public, every data source attributed on-screen.
 
@@ -83,11 +83,13 @@ console boots straight into the Arabian Gulf theater. No install, no API keys, n
 - **Vector theater map** — hand-simplified WGS84 coastlines (Arabia incl. Qatar and the
   Musandam enclave, Iran, Qeshm, Bahrain), amber UAE sector with approximate emirate
   borders, graticule, scale bar and compass
-- **20-node camera grid** — click a node for a dashed selection reticle, cinematic zoom,
+- **29-node camera grid** — click a node for a dashed selection reticle, cinematic zoom,
   coordinate/LINK-probe detail panel and an **OPEN LIVE FEED** button to the provider page
-- **4 nodes stream embedded in-page** — DXB-05 (Dubai 24/7 Burj Khalifa), MKKA-01 (Makkah
-  Masjid al-Haram), MDNA-01 (Madinah Masjid an-Nabawi), JRS-02 (Jerusalem Western Wall) play
-  right inside the console via the sources' official YouTube players — no link-out needed
+- **13 nodes stream embedded in-page** — DXB-05…10 (six 24/7 Dubai feeds: Burj Khalifa,
+  Dubai Marina ×2, JBR The Walk, City Center day + night), MKKA-01/02 (Makkah Masjid al-Haram
+  + Kaaba HD), MDNA-01/02 (Madinah Masjid an-Nabawi ×2), JRS-02/03 (Jerusalem Western Wall
+  via EarthCam + official Kotel Cams) and OSINT-01 (rotating Middle East multi-cam OSINT
+  grid) play right inside the console via the sources' official YouTube players
 - **Live ADS-B layer** — aircraft symbols with callsign labels, honestly tagged
   `LIVE` or `SIM` depending on feed reachability from your network
 - **Signal event log + LIVE WIRE ticker** — camera health flicker, quakes, ISS telemetry,
@@ -151,16 +153,31 @@ bun run dev            # or: npm run dev  →  http://localhost:3000
 | JRS-01 | Jerusalem — Old City Overview | Jerusalem | SkylineWebcams |
 | PTRA-01 | Petra — Rose City Approach | Ma'an Governorate | SkylineWebcams |
 | DXB-05 | Dubai 24/7 — Burj Khalifa Skyline ▶ | Dubai | UinDubai · YouTube |
-| MKKA-01 | Makkah — Masjid al-Haram ▶ | Makkah | KSA Quran TV · YouTube |
-| MDNA-01 | Madinah — Masjid an-Nabawi ▶ | Madinah | Sunnah TV · YouTube |
-| JRS-02 | Jerusalem — Western Wall (Kotel) ▶ | Jerusalem | Western Wall Heritage · YouTube |
+| DXB-06 | Dubai Marina 24/7 — Marina Walk ▶ | Dubai | UinDubai · YouTube |
+| DXB-07 | Dubai Marina 24/7 — CitiesTouch Feed ▶ | Dubai | CitiesTouch · YouTube |
+| DXB-08 | JBR The Walk 24/7 — Beachfront ▶ | Dubai | UinDubai · YouTube |
+| DXB-09 | City Center 24/7 — Downtown Panorama ▶ | Dubai | UinDubai · YouTube |
+| DXB-10 | Night City Center 24/7 — Burj Skyline ▶ | Dubai | UinDubai · YouTube |
+| MKKA-01 | Makkah — Masjid al-Haram ▶ | Makkah | Saudi Quran TV (official) · YouTube |
+| MKKA-02 | Makkah — Kaaba HD 24/7 ▶ | Makkah | Ar Rahman · YouTube |
+| MDNA-01 | Madinah — Masjid an-Nabawi ▶ | Madinah | Saudi Sunnah TV (official) · YouTube |
+| MDNA-02 | Madinah — Nabawi Mosque 24/7 ▶ | Madinah | Noor Al-Haram · YouTube |
+| JRS-02 | Jerusalem — Western Wall (Kotel) ▶ | Jerusalem | EarthCam · YouTube |
+| JRS-03 | Jerusalem — Western Wall Main Plaza ▶ | Jerusalem | Kotel Cams (official) · YouTube |
+| OSINT-01 | Middle East Multi-Feed — OSINT Grid ▶ | Regional | InquizeX · YouTube |
 
 ▶ = official stream **embedded in-page** (watch it directly inside the console).
 
 Camera hosts block third-party embedding (X-Frame-Options), so link-out nodes health-probe
 each source and hand you a one-click **OPEN LIVE FEED** link to the provider's own page —
-no streams are rehosted or proxied. The four ▶ nodes are played through their sources'
+no streams are rehosted or proxied. The thirteen ▶ nodes are played through their sources'
 official YouTube embed players, which do allow in-page embedding.
+
+**Feed-rotation resilience:** 24/7 YouTube sources occasionally restart their streams, which
+changes the stream's video ID. Every ▶ node therefore carries the source **channel ID**:
+if a player ever reports "unavailable", hit **RE-ACQUIRE** (reload the feed) or
+**CHANNEL-LIVE OVERRIDE** (follows whatever the source channel is broadcasting right now),
+so the console keeps working even when upstream feeds rotate.
 
 ## 🛰 Data sources (all public, all attributed)
 
@@ -172,7 +189,7 @@ official YouTube embed players, which do allow in-page embedding.
 | ISS | [wheretheiss.at](https://wheretheiss.at) | both editions |
 | News wire | [GDELT](https://www.gdeltproject.org) (rate-limit aware, graceful sync state) | both editions |
 | Camera listings | [SkylineWebcams](https://www.skylinewebcams.com) · [WorldCam](https://worldcam.eu) | both editions |
-| Embedded cams | YouTube: UinDubai · [KSA Quran TV](https://www.youtube.com/@SaudiQuranTv) · Sunnah TV · Western Wall Heritage | both editions |
+| Embedded cams | YouTube: [UinDubai](https://www.youtube.com/@UinDubai) · CitiesTouch · [Saudi Quran TV](https://www.youtube.com/@SaudiQuranTv) · Sunnah TV · [EarthCam](https://www.youtube.com/@EarthCam) · Kotel Cams · InquizeX | both editions |
 | Basemap | Esri World Imagery (Esri, Maxar, OSM) | Command Center |
 | Overlays | RainViewer radar · NASA GIBS MODIS | Command Center |
 

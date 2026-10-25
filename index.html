@@ -294,6 +294,7 @@ button{font-family:var(--mono)}
 </style>
 </head>
 <body>
+<noscript><div style="position:fixed;inset:0;background:#05060a;color:#ffb000;font-family:ui-monospace,Menlo,Consolas,monospace;display:flex;align-items:center;justify-content:center;z-index:99999;text-align:center;padding:24px;font-size:13px;letter-spacing:.08em;line-height:1.8">◉ GODS EYE // UAE requires JavaScript.<br>Enable JavaScript in your browser settings, then reload this page.<br>Direct live feeds: youtube.com — UinDubai (Dubai 24/7) · Saudi Quran TV (Makkah) · Sunnah TV (Madinah)</div></noscript>
 <!-- BOOT SEQUENCE -->
 <div id="boot" role="status" aria-label="System booting">
   <div class="inner scanlines vignette">
@@ -1143,17 +1144,36 @@ setInterval(()=>{
 },1500);
 
 /* ── INIT ── */
-fitMap();
-S.aircraft=simAircraft(46);S.aircraftSrc='SIM';
-$('#c-air').textContent=S.aircraft.length;$('#air-mode').textContent='SIM CONTACTS';
-setChip('adsb','SIM','sim');
-buildLayers();buildCamList();
-logEvent('info','GODS EYE FIELD BUILD online — single-file console, Canvas 2D renderer');
-logEvent('info','20-node camera manifest loaded — UAE grid + ME regional');
-pullAircraft();pullQuakes();pullWx();pullIss();pullWire();
-setInterval(pullAircraft,15000);setInterval(pullQuakes,300000);
-setInterval(pullWx,120000);setInterval(pullIss,6000);setInterval(pullWire,120000);
-runBoot();
+try{
+  fitMap();
+  S.aircraft=simAircraft(46);S.aircraftSrc='SIM';
+  $('#c-air').textContent=S.aircraft.length;$('#air-mode').textContent='SIM CONTACTS';
+  setChip('adsb','SIM','sim');
+  buildLayers();buildCamList();
+  logEvent('info','GODS EYE FIELD BUILD online — single-file console, Canvas 2D renderer');
+  logEvent('info','20-node camera manifest loaded — UAE grid + ME regional');
+  pullAircraft();pullQuakes();pullWx();pullIss();pullWire();
+  setInterval(pullAircraft,15000);setInterval(pullQuakes,300000);
+  setInterval(pullWx,120000);setInterval(pullIss,6000);setInterval(pullWire,120000);
+  runBoot();
+}catch(err){
+  /* BOOT GUARD — never leave the operator staring at a dead console */
+  console.error('BOOT FAILURE',err);
+  var msg=String(err&&err.message||err).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  document.body.innerHTML='<div style="position:fixed;inset:0;background:#05060a;color:#e8e4d8;font-family:ui-monospace,Menlo,Consolas,monospace;display:flex;align-items:center;justify-content:center;padding:20px">'
+   +'<div style="max-width:640px;border:1px solid rgba(255,176,0,.35);padding:28px;line-height:1.7">'
+   +'<div style="color:#ffb000;letter-spacing:.25em;font-size:13px;margin-bottom:10px">◉ GODS EYE // UAE — CONSOLE FAULT</div>'
+   +'<div style="font-size:12px;color:#e8e4d8;margin-bottom:14px">Boot sequence intercepted an error. Your signal is not lost — re-engage below.</div>'
+   +'<div style="font-size:11px;color:#8d8875;margin-bottom:18px">FAULT CODE: '+msg+'</div>'
+   +'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px">'
+   +'<button onclick="location.reload()" style="background:#ffb000;color:#05060a;border:0;padding:10px 16px;font-family:inherit;font-size:11px;letter-spacing:.15em;cursor:pointer">RE-ENGAGE CONSOLE</button>'
+   +'<a href="https://www.youtube.com/watch?v=MIhw4UPYjMQ" target="_blank" rel="noopener" style="color:#ffb000;font-size:11px;letter-spacing:.12em;text-decoration:none;border:1px solid rgba(255,176,0,.35);padding:10px 14px">DUBAI 24/7 FEED ↗</a>'
+   +'<a href="https://www.youtube.com/watch?v=BZAe-d6HKeE" target="_blank" rel="noopener" style="color:#ffb000;font-size:11px;letter-spacing:.12em;text-decoration:none;border:1px solid rgba(255,176,0,.35);padding:10px 14px">MAKKAH FEED ↗</a>'
+   +'<a href="https://www.youtube.com/watch?v=mXcmTPuQH90" target="_blank" rel="noopener" style="color:#ffb000;font-size:11px;letter-spacing:.12em;text-decoration:none;border:1px solid rgba(255,176,0,.35);padding:10px 14px">MADINAH FEED ↗</a>'
+   +'</div>'
+   +'<div style="font-size:10px;color:#8d8875;letter-spacing:.1em">PERSISTENT FAULT? HARD-REFRESH (CTRL+SHIFT+R / CLEAR SITE DATA) — FEEDS ALSO LIVE ON THE SOURCE CHANNELS.</div>'
+   +'</div></div>';
+}
 </script>
 
 </body>

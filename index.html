@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GODS EYE // UAE — Middle East Signals Command</title>
-<meta name="description" content="Gods Eye — open-signals mission console for Middle East cameras. UAE first: live camera grid, ADS-B air traffic, USGS seismic, ISS telemetry, weather wire.">
+<meta name="description" content="Gods Eye — open-signals mission console for Middle East cameras. UAE first: 31-node live camera grid, ADS-B air traffic, USGS seismic, ISS telemetry, weather wire.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="GODS EYE // UAE — Middle East Signals Command">
-<meta property="og:description" content="Open-signals mission console: 29-node Middle East camera grid (UAE first), live ADS-B air traffic, USGS seismic, ISS telemetry and weather wire — one file, zero dependencies.">
+<meta property="og:description" content="Open-signals mission console: 31-node Middle East camera grid (UAE first), live ADS-B air traffic, USGS seismic, ISS telemetry and weather wire — one file, zero dependencies.">
 <meta property="og:image" content="screenshots/field-build-theater.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="GODS EYE // UAE — Middle East Signals Command">
@@ -322,7 +322,7 @@ button{font-family:var(--mono)}
   </div>
   <div id="counters">
     <div class="counter"><b>Aircraft</b><span id="c-air">--</span></div>
-    <div class="counter"><b>Cameras</b><span id="c-cam">29</span></div>
+    <div class="counter"><b>Cameras</b><span id="c-cam">31</span></div>
     <div class="counter"><b>Seismic 24h</b><span id="c-seis">--</span></div>
   </div>
   <div id="chips">
@@ -387,7 +387,7 @@ button{font-family:var(--mono)}
             <div id="cd-fallback" hidden>
               <button class="btn fb-btn" id="cd-reacquire" type="button">RE-ACQUIRE</button>
               <button class="btn fb-btn" id="cd-chlive" type="button">CHANNEL-LIVE OVERRIDE</button>
-              <span>Feed shows “unavailable”? 24/7 sources rotate stream IDs — re-acquire the feed or force the source channel’s current live broadcast.</span>
+              <span>SELF-HEALING PIPELINE — on signal loss the console auto-fails-over to the source channel’s current broadcast. RE-ACQUIRE forces a fresh cycle; OPEN LIVE FEED opens the source page full-screen.</span>
             </div>
           </div>
           <div class="cdv">
@@ -400,7 +400,7 @@ button{font-family:var(--mono)}
           <p class="note" id="cd-note"></p>
         </div>
         <div class="sect" id="cam-list-sect">
-          <h3>Camera grid — <span id="cam-count">29</span> nodes</h3>
+          <h3>Camera grid — <span id="cam-count">31</span> nodes</h3>
           <div id="cam-list"></div>
         </div>
       </div>
@@ -490,6 +490,8 @@ const CAMS=[
  {id:'jrs-kotel',code:'JRS-02',name:'Jerusalem — Western Wall (Kotel)',city:'Jerusalem',country:'Israel / Palestine',lat:31.7767,lon:35.2345,provider:'EarthCam · YouTube',pageUrl:'https://www.youtube.com/watch?v=77akujLn4k8',embed:'77akujLn4k8',channel:'UC6qrG3W8SMK0jior2olka3g',tier:'verified',domain:'HERITAGE',note:'Official EarthCam 24/7 live view of the Western Wall plaza, Jerusalem.'},
  {id:'jrs-kotel-plaza',code:'JRS-03',name:'Jerusalem — Western Wall Main Plaza',city:'Jerusalem',country:'Israel / Palestine',lat:31.7767,lon:35.2345,provider:'Kotel Cams (official) · YouTube',pageUrl:'https://www.youtube.com/watch?v=LMHUcDktP-w',embed:'LMHUcDktP-w',channel:'UCvcdHbNAQvbe2GuIDLhlwaw',tier:'verified',domain:'HERITAGE',note:'Official Kotel Cams 24/7 view of the Western Wall main plaza.'},
  {id:'me-osint-grid',code:'OSINT-01',name:'Middle East Multi-Feed — OSINT Grid',city:'Regional',country:'Multi-Nation',lat:28.5,lon:45.0,provider:'InquizeX · YouTube',pageUrl:'https://www.youtube.com/watch?v=fn_ZWTr0Tb8',embed:'fn_ZWTr0Tb8',channel:'UCuyLmOJb7PVCvx8zbRT9_GQ',tier:'verified',domain:'OSINT',note:'Rotating HD camera feeds across the Middle East — multi-nation OSINT aggregation.'},
+ {id:'dxb-burj-worldcam',code:'DXB-11',name:'Burj Khalifa — Downtown Skyline',city:'Dubai',country:'United Arab Emirates',lat:25.1972,lon:55.2744,provider:'WorldCam',pageUrl:'https://worldcam.eu/webcams/asia/uae/16986-dubai-burj-khalifa',tier:'listed',domain:'URBAN',note:'Downtown Dubai and the Burj Khalifa district — directory feed with current frame and local weather on the source page.'},
+ {id:'auh-babqasr',code:'AUH-05',name:'Masdar City — Bab Al Qasr Resort',city:'Abu Dhabi',country:'United Arab Emirates',lat:24.4267,lon:54.6156,provider:'Vision-Environnement',pageUrl:'https://www.vision-environnement.com/en/webcam/emirats-arabes-unis/abu-dhabi/19676-abu-dhabi-bab-al-qasr-resort-residence-19',tier:'verified',domain:'URBAN',note:'Professional HD resort webcam over the Abu Dhabi waterfront — live stream, weather data and timelapse archive on the source page.'},
 ];
 CAMS.forEach(c=>{c.me=c.country!=='United Arab Emirates';c.online=Math.random()>.05;});
 const camByCode=Object.fromEntries(CAMS.map(c=>[c.code,c]));
@@ -987,9 +989,62 @@ async function probe(url){
     return Math.round(performance.now()-t0)+'ms';}
   catch(e){return 'BLOCKED';}
 }
+/* ── SELF-HEALING PLAYER — YouTube IFrame API + auto-failover ──
+   stage 0: source video ID (24/7 stream) — onError →
+   stage 1: channel live_stream (always follows the channel's CURRENT broadcast) →
+   stage 2: fallback strip surfaced — OPEN LIVE FEED / RE-ACQUIRE take over */
+let ytApiReady=false,ytApiQueued=false,ytPlayer=null;
+const camFail={}; /* code → failover stage, survives camera switching */
+function ensureYtApi(){
+  if(ytApiReady||ytApiQueued)return;
+  ytApiQueued=true;
+  window.onYouTubeIframeAPIReady=function(){ytApiReady=true;};
+  const s=document.createElement('script');
+  s.src='https://www.youtube.com/iframe_api';s.async=true;
+  s.onerror=function(){ytApiQueued=false;};
+  document.head.appendChild(s);
+}
+function killPlayer(){if(ytPlayer){try{ytPlayer.destroy();}catch(e){}ytPlayer=null;}}
+function ytIframe(src,c){
+  const f=document.createElement('iframe');
+  f.src=src;f.allow='autoplay; encrypted-media; picture-in-picture';f.setAttribute('allowfullscreen','');f.loading='lazy';
+  f.title=c.code+' live stream';
+  return f;
+}
+function mountCamPlayer(c,forceStage){
+  const PF=$('#cd-player-frame');killPlayer();PF.innerHTML='';
+  const stage=forceStage!=null?forceStage:(camFail[c.code]||0);
+  const useLive=c.channel&&(stage>=1||!c.embed);
+  const vsrc='https://www.youtube.com/embed/'+c.embed+'?autoplay=1&mute=1&playsinline=1&rel=0';
+  const lsrc='https://www.youtube.com/embed/live_stream?channel='+c.channel+'&autoplay=1&mute=1&playsinline=1&rel=0';
+  if(useLive){PF.appendChild(ytIframe(lsrc,c));return;}
+  ensureYtApi();
+  const holder=document.createElement('div');
+  holder.style.cssText='position:absolute;inset:0';
+  PF.appendChild(holder);
+  function build(){
+    if(!S.selected||S.selected!==c)return;
+    if(!window.YT||!ytApiReady){holder.replaceWith(ytIframe(vsrc,c));return;}
+    try{
+      ytPlayer=new YT.Player(holder,{width:'100%',height:'100%',videoId:c.embed,
+        playerVars:{autoplay:1,mute:1,playsinline:1,rel:0},
+        events:{onError:function(e){
+          if(c.channel&&(camFail[c.code]||0)<1){
+            camFail[c.code]=1;
+            logEvent('warn',c.code+' SIGNAL LOST (err '+e.data+') — AUTO-FAILOVER to source channel current broadcast');
+            mountCamPlayer(c,1);$('#cd-fallback').hidden=false;
+          }else{
+            logEvent('warn',c.code+' embedded player rejected (err '+e.data+') — OPEN LIVE FEED or RE-ACQUIRE');
+            $('#cd-fallback').hidden=false;
+          }
+        }}});
+    }catch(e){holder.replaceWith(ytIframe(vsrc,c));}
+  }
+  if(ytApiReady)build();else setTimeout(build,900);
+}
 function showCamDetail(c){
   const det=$('#cam-detail'),emp=$('#cam-empty');
-  if(!c){det.style.display='none';emp.style.display='block';$('#cd-player').hidden=true;$('#cd-player-frame').innerHTML='';return;}
+  if(!c){det.style.display='none';emp.style.display='block';$('#cd-player').hidden=true;killPlayer();$('#cd-player-frame').innerHTML='';return;}
   det.style.display='block';emp.style.display='none';
   $('#cd-name').textContent=c.code+' — '+c.name;
   $('#cd-city').textContent=c.city.toUpperCase()+' · '+c.country.toUpperCase();
@@ -1005,14 +1060,14 @@ function showCamDetail(c){
   $('#cd-feed').href=c.pageUrl;
   const PL=$('#cd-player'),PF=$('#cd-player-frame');
   if(c.embed){PL.hidden=false;
-    PF.innerHTML='<iframe src="https://www.youtube.com/embed/'+c.embed+'?autoplay=1&mute=1&playsinline=1&rel=0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy" title="'+c.code+' live stream"></iframe>';
-    $('#cd-fallback').hidden=false;$('#cd-chlive').style.display=c.channel?'':'none';}
-  else{PL.hidden=true;PF.innerHTML='';$('#cd-fallback').hidden=true;}
-  $('#cd-note').textContent=c.note+' '+(c.embed?'Live view embedded above via the source\u2019s official player — OPEN LIVE FEED opens the full-screen source page.':'Source page opens in a new tab — providers serve the live stream on their own domain (X-Frame-Options protected).');
+    mountCamPlayer(c);
+    $('#cd-fallback').hidden=(camFail[c.code]||0)<1;$('#cd-chlive').style.display=c.channel?'':'none';}
+  else{PL.hidden=true;killPlayer();PF.innerHTML='';$('#cd-fallback').hidden=true;}
+  $('#cd-note').textContent=c.note+' '+(c.embed?'Live view embedded above via the source\u2019s official player — on signal loss the console auto-fails-over to the channel\u2019s current broadcast; OPEN LIVE FEED opens the full-screen source page.':'Source page opens in a new tab — providers serve the live stream on their own domain (X-Frame-Options protected).');
   probe(c.pageUrl).then(r=>{if(S.selected===c)$('#cd-link').textContent=r;});
 }
-$('#cd-reacquire').addEventListener('click',()=>{const c=S.selected;if(!c||!c.embed)return;const f=$('#cd-player-frame iframe');if(f){f.src='https://www.youtube.com/embed/'+c.embed+'?autoplay=1&mute=1&playsinline=1&rel=0&reload='+Date.now();logEvent('warn',c.code+' RE-ACQUIRE — player reload signal sent');}});
-$('#cd-chlive').addEventListener('click',()=>{const c=S.selected;if(!c||!c.channel)return;const f=$('#cd-player-frame iframe');if(f){f.src='https://www.youtube.com/embed/live_stream?channel='+c.channel+'&autoplay=1&mute=1&playsinline=1&rel=0';logEvent('warn',c.code+' CHANNEL-LIVE OVERRIDE — following source channel current broadcast');}});
+$('#cd-reacquire').addEventListener('click',()=>{const c=S.selected;if(!c||!c.embed)return;camFail[c.code]=0;mountCamPlayer(c,0);logEvent('warn',c.code+' RE-ACQUIRE — fresh acquisition cycle on source video ID');});
+$('#cd-chlive').addEventListener('click',()=>{const c=S.selected;if(!c||!c.channel)return;camFail[c.code]=1;mountCamPlayer(c,1);logEvent('warn',c.code+' CHANNEL-LIVE OVERRIDE — following source channel current broadcast');});
 
 /* ── AIR / ENV / WIRE / AI renders ── */
 let selAc=null;
@@ -1065,7 +1120,7 @@ function compileBrief(force){
   lines.push('SECTOR — Gulf theater fusing <em>'+S.aircraft.length+'</em> air transponders ('+S.aircraftSrc+') across the Arabian Peninsula approaches; camera grid holds <em>'+online+'/'+CAMS.length+'</em> reporting nodes, '+CAMS.filter(c=>c.embed).length+' with in-page embedded streams.');
   lines.push('SEISMIC — USGS logged <em>'+S.quakes.length+'</em> Middle East events in the 24h window'+(strongest?', strongest <em>M '+(+strongest.mag).toFixed(1)+'</em> '+esc(strongest.place):'')+'. No tsunami advisory implied by this console.');
   lines.push('WEATHER — Dubai <em>'+wxd+'</em>, Abu Dhabi '+(S.wx.AUH?S.wx.AUH.t+'°C':'—')+', Sharjah '+(S.wx.SHJ?S.wx.SHJ.t+'°C':'—')+'; optics nominal across the grid'+(S.wx.DXB&&S.wx.DXB.w>30?' — visibility flag on Gulf haze corridor':'')+'.');
-  lines.push('REGIONAL — ME nodes <em>CAI-01/02 · IST-01 · JRS-01 · PTRA-01</em> standing by — Dubai 24/7 net DXB-05…10, MKKA-01/02, MDNA-01/02, JRS-02/03 and OSINT-01 stream embedded in-page.');
+  lines.push('REGIONAL — ME nodes <em>CAI-01/02 · IST-01 · JRS-01 · PTRA-01</em> standing by — Dubai 24/7 net DXB-05…11, MKKA-01/02, MDNA-01/02, JRS-02/03 and OSINT-01 stream embedded in-page.');
   if(S.iss)lines.push('ORBITAL — ISS overhead <em>'+S.iss.lat.toFixed(1)+'N '+S.iss.lon.toFixed(1)+'E</em> at '+Math.round(S.iss.alt)+' km, '+Math.round(S.iss.vel).toLocaleString('en')+' km/h.');
   lines.push('WIRE — '+S.wireSrc+' tap buffering <em>'+S.wire.length+'</em> items. Doctrine: <em>OPEN SIGNALS ONLY</em>.');
   el.innerHTML=lines.map(l=>'▸ '+l).join('\n\n')+'\n\n— GODS EYE ON-DEVICE ANALYST // FIELD BUILD';
@@ -1171,8 +1226,9 @@ try{
   $('#c-air').textContent=S.aircraft.length;$('#air-mode').textContent='SIM CONTACTS';
   setChip('adsb','SIM','sim');
   buildLayers();buildCamList();
+  $('#c-cam').textContent=CAMS.length;
   logEvent('info','GODS EYE FIELD BUILD online — single-file console, Canvas 2D renderer');
-  logEvent('info','29-node camera manifest loaded — UAE grid + ME regional');
+  logEvent('info','31-node camera manifest loaded — UAE grid + ME regional');
   pullAircraft();pullQuakes();pullWx();pullIss();pullWire();
   setInterval(pullAircraft,15000);setInterval(pullQuakes,300000);
   setInterval(pullWx,120000);setInterval(pullIss,6000);setInterval(pullWire,120000);

@@ -197,6 +197,31 @@ Feeds that are unreachable from your network degrade **honestly**: the HUD chip 
 sync state, SIM-derived data is tagged `SIM`, and the console keeps running on the
 remaining live sources. No fake data is ever presented as live.
 
+## 🩺 White page / cameras not loading? (self-recovery guide)
+
+The Field Build ships with **three layers of self-recovery**, but if you ever land on a
+white page, work through this list — it resolves every known cause:
+
+1. **Hard refresh** — desktop: `CTRL+SHIFT+R` (Windows/Linux) or `CMD+SHIFT+R` (Mac).
+   Mobile: clear site data for `almarzooqi1975.github.io`, then reload.
+2. **Cache-bust link** — open
+   [`https://almarzooqi1975.github.io/gods-eye-uae/?v=1`](https://almarzooqi1975.github.io/gods-eye-uae/?v=1)
+   (any `?v=` value forces every browser to fetch a fresh copy).
+3. **Check the build stamp** — the top bar shows `FIELD BUILD · BUILD R3 · 2026-10-26`.
+   If you don't see it, you are on a stale copy — repeat step 1.
+4. **Diagnostic page** — open
+   [`/gods-eye-uae/status.html`](https://almarzooqi1975.github.io/gods-eye-uae/status.html).
+   * If **status.html loads** but the console stays white → stale cache (step 1).
+   * If **status.html also fails** → your network/ISP is blocking `github.io`.
+     Switch to mobile data / another Wi-Fi / VPN. This is a network-level block,
+     not a site fault — the same one-file console works on any static host.
+5. **Old links can't 404** — the repo ships a `404.html` that auto-redirects any
+   stale path back to the console.
+6. **Runtime faults are visible, not silent** — any script error appears as a red
+   strip at the top of the screen (with the fault text), and an 8-second watchdog
+   reveals the HUD plus a recovery strip with a FORCE RELOAD button and direct
+   24/7 feed links if boot ever stalls.
+
 ## ⚠️ Disclaimer
 
 GODS EYE // UAE aggregates **publicly accessible, openly published signals** — public

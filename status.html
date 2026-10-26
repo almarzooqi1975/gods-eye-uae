@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GODS EYE // UAE — LINK DIAGNOSTIC</title>
+<style>
+  html,body{height:100%;margin:0}
+  body{background:#05060a;color:#e8e4d8;font-family:ui-monospace,Menlo,Consolas,"SF Mono",monospace;display:flex;align-items:center;justify-content:center;padding:20px}
+  .box{border:1px solid rgba(255,176,0,.35);padding:34px 40px;max-width:720px;line-height:1.9;box-shadow:0 8px 30px rgba(0,0,0,.55)}
+  .t{color:#ffb000;letter-spacing:.25em;font-size:13px;margin-bottom:14px}
+  .ok{color:#00ff80;font-weight:700}
+  .dim{color:#8d8875;font-size:11px}
+  a{color:#ffc233}
+  .btn{display:inline-block;background:#ffb000;color:#05060a;font-weight:700;padding:10px 18px;letter-spacing:.15em;font-size:11px;margin:14px 8px 0 0;text-decoration:none}
+  .ghost{display:inline-block;border:1px solid rgba(255,176,0,.4);color:#ffb000;padding:10px 18px;letter-spacing:.15em;font-size:11px;margin:14px 8px 0 0;text-decoration:none}
+  ol{margin:10px 0 0 18px;padding:0;font-size:12px}
+  li{margin-bottom:6px}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="t">◉ GODS EYE // UAE — LINK DIAGNOSTIC</div>
+  <div class="ok" id="st">CHECKING UPLINK…</div>
+  <div class="dim" id="info">GitHub Pages is reachable from this browser — this page is served from the same domain as the command console.</div>
+  <div style="margin-top:10px;font-size:12px">
+    <b>What this means:</b>
+    <ol>
+      <li>If this page loads but the <a href="./">command console</a> stays white → your browser is holding a stale cached copy. Use <b>FORCE RELOAD</b> below.</li>
+      <li>If this page also fails to load → your network/ISP is blocking <b>github.io</b>. Try mobile data, another Wi-Fi, or a VPN.</li>
+      <li>Cameras show only external links? Some feeds are protected by their providers — use the 24/7 YouTube-embedded nodes (DXB-05…10, MKKA, MDNA).</li>
+    </ol>
+  </div>
+  <a class="btn" href="./">OPEN COMMAND CONSOLE ↗</a>
+  <a class="ghost" href="javascript:location.replace(location.pathname.replace('status.html','')+'?v='+Date.now())">FORCE RELOAD (CACHE-BUST) ↻</a>
+  <div class="dim" style="margin-top:16px">Uplink check: <span id="stamp">--</span> · served from <span id="host">--</span></div>
+</div>
+<script>
+(function(){
+  var s=document.getElementById('stamp');
+  var h=document.getElementById('host');
+  if(h)h.textContent=location.host;
+  if(s)s.textContent=new Date().toUTCString();
+  var st=document.getElementById('st');
+  var info=document.getElementById('info');
+  if(st)st.textContent='● UPLINK OK — GITHUB PAGES REACHABLE FROM THIS BROWSER';
+  if(navigator.onLine===false){if(st)st.textContent='▲ BROWSER REPORTS OFFLINE — CHECK YOUR CONNECTION';}
+})();
+</script>
+</body>
+</html>

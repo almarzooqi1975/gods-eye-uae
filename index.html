@@ -4,15 +4,39 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script>
-/* ── WHITE-SCREEN WATCHDOG (ES5 — parse-error proof) ─────────────────────────
-   Runs before everything else. If the console does not finish booting within
-   12 s (stale cache, older browser, blocked network, mid-deploy snapshot),
-   this watchdog force-reveals the HUD and surfaces a recovery strip with
-   direct links to the live feeds. The operator is NEVER left staring at a
-   blank screen. */
+/* ── WHITE-SCREEN WATCHDOG v2.3 (ES5 — parse-error proof) ───────────────────
+   Runs before everything else. Three layers of protection:
+   1. ERROR TRAP  — any fatal script error surfaces as a red strip at the top
+      of the screen (with build stamp) instead of dying silently.
+   2. WATCHDOG    — if the console does not finish booting within 8 s (stale
+      cache, older browser, blocked network, mid-deploy snapshot), it force-
+      reveals the HUD and shows a recovery strip with FORCE RELOAD + direct
+      links to the live feeds. The operator is NEVER left staring at a blank
+      screen.
+   3. BUILD STAMP — visible in the top bar so the operator can instantly
+      confirm which build the browser is actually serving. */
 (function(){
   'use strict';
   window.__GE_BOOT_OK__=false;
+  window.__GE_BUILD__='R3 · 2026-10-26';
+  /* layer 1 — on-screen runtime error trap */
+  function geErr(msg){
+    try{
+      var el=document.getElementById('ge-errtrap');
+      if(!el){
+        el=document.createElement('div');
+        el.id='ge-errtrap';
+        el.style.cssText='position:fixed;left:0;right:0;top:0;z-index:99999;background:#2a0606;color:#ff9494;border-bottom:1px solid rgba(255,77,77,.6);font:10px/1.6 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.05em;padding:5px 10px;white-space:pre-wrap';
+        (document.body||document.documentElement).appendChild(el);
+      }
+      el.textContent='RUNTIME FAULT — BUILD '+window.__GE_BUILD__+' — '+msg+' — press CTRL+SHIFT+R to recover';
+    }catch(e){}
+  }
+  window.onerror=function(m,s,l){geErr(String(m)+(l?(' @line '+l):''));};
+  window.addEventListener('unhandledrejection',function(e){
+    var r=e&&e.reason;geErr('PROMISE '+(r&&(r.message||r)||'rejected'));
+  });
+  /* layer 2 — boot watchdog + recovery strip */
   function geRecover(){
     if(window.__GE_BOOT_OK__)return;
     try{
@@ -23,17 +47,26 @@
         var bar=document.createElement('div');
         bar.id='ge-recovery';
         bar.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:99998;background:#1a1206;color:#ffb000;border-top:1px solid rgba(255,176,0,.45);font:10px/1.7 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.08em;padding:6px 12px';
-        bar.innerHTML='RECOVERY MODE — console did not fully boot in this browser/session. HARD-REFRESH (CTRL+SHIFT+R, or clear site data on mobile) for full systems. Direct 24/7 feeds:'
+        bar.innerHTML='RECOVERY MODE — BUILD '+window.__GE_BUILD__+' — console did not fully boot in this browser/session. HARD-REFRESH (CTRL+SHIFT+R) or clear site data on mobile for full systems. Direct 24/7 feeds:'
           +' <a href="https://www.youtube.com/watch?v=eI4UQRrXmgY" target="_blank" rel="noopener" style="color:#ffc233;margin:0 6px">DUBAI ↗</a>'
           +' <a href="https://www.youtube.com/watch?v=K6_VbxTvwkc" target="_blank" rel="noopener" style="color:#ffc233;margin:0 6px">DUBAI MARINA ↗</a>'
           +' <a href="https://www.youtube.com/watch?v=eC4LfEVxvKg" target="_blank" rel="noopener" style="color:#ffc233;margin:0 6px">MAKKAH ↗</a>'
           +' <a href="https://www.youtube.com/watch?v=Rs7St51oDDc" target="_blank" rel="noopener" style="color:#ffc233;margin:0 6px">MADINAH ↗</a>';
+        var rl=document.createElement('a');
+        rl.href='#';rl.style.cssText='color:#05060a;background:#ffb000;font-weight:700;padding:1px 8px;margin:0 6px;text-decoration:none';
+        rl.textContent='FORCE RELOAD ↻';
+        rl.onclick=function(ev){
+          ev.preventDefault();
+          try{location.replace(location.pathname+'?v='+Date.now()+location.hash);}
+          catch(e){location.reload(true);}
+        };
+        bar.appendChild(rl);
         document.body.appendChild(bar);
       }
     }catch(e){}
   }
   window.__GE_RECOVER__=geRecover;
-  setTimeout(geRecover,12000);
+  setTimeout(geRecover,8000);
 })();
 </script>
 <title>GODS EYE // UAE — Middle East Signals Command</title>
@@ -346,7 +379,7 @@ button{font-family:var(--mono)}
     <span class="brand-ring"><i></i></span>
     <div>
       <h1 class="hud-glow">GODS EYE // UAE</h1>
-      <small>MIDDLE EAST SIGNALS COMMAND — FIELD BUILD</small>
+      <small>MIDDLE EAST SIGNALS COMMAND — FIELD BUILD · <span id="ge-build" style="color:#22d3a7">--</span></small>
     </div>
   </div>
   <div id="clocks">
@@ -1193,7 +1226,7 @@ $('#watch-btn').onclick=()=>{
 
 /* ── BOOT ── */
 const BOOTLINES=[
-  '> INITIALIZING GODS EYE KERNEL v2.1 ............ OK',
+  '> INITIALIZING GODS EYE KERNEL v2.3 — BUILD '+(window.__GE_BUILD__||'R3')+' ............ OK',
   '> LINKING PUBLIC ADS-B MESH (GULF SECTOR) ...... OK',
   '> ACQUIRING UAE CAMERA GRID .................... OK',
   '> USGS SEISMIC UPLINK .......................... OK',
@@ -1263,6 +1296,7 @@ try{
   $('#c-air').textContent=S.aircraft.length;$('#air-mode').textContent='SIM CONTACTS';
   setChip('adsb','SIM','sim');
   buildLayers();buildCamList();
+  var stampEl=$('#ge-build');if(stampEl)stampEl.textContent='BUILD '+(window.__GE_BUILD__||'R3');
   $('#c-cam').textContent=CAMS.length;
   logEvent('info','GODS EYE FIELD BUILD online — single-file console, Canvas 2D renderer');
   logEvent('info','31-node camera manifest loaded — UAE grid + ME regional');

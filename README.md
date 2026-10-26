@@ -207,7 +207,7 @@ white page, work through this list — it resolves every known cause:
 2. **Cache-bust link** — open
    [`https://almarzooqi1975.github.io/gods-eye-uae/?v=1`](https://almarzooqi1975.github.io/gods-eye-uae/?v=1)
    (any `?v=` value forces every browser to fetch a fresh copy).
-3. **Check the build stamp** — the top bar shows `FIELD BUILD · BUILD R3 · 2026-10-26`.
+3. **Check the build stamp** — the top bar shows `FIELD BUILD · BUILD R4 · 2026-10-26`.
    If you don't see it, you are on a stale copy — repeat step 1.
 4. **Diagnostic page** — open
    [`/gods-eye-uae/status.html`](https://almarzooqi1975.github.io/gods-eye-uae/status.html).

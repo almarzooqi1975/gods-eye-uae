@@ -18,7 +18,7 @@
 (function(){
   'use strict';
   window.__GE_BOOT_OK__=false;
-  window.__GE_BUILD__='R3 · 2026-10-26';
+  window.__GE_BUILD__='R4 · 2026-10-26';
   /* layer 1 — on-screen runtime error trap */
   function geErr(msg){
     try{
@@ -447,13 +447,15 @@ button{font-family:var(--mono)}
           <div class="cd-city" id="cd-city"></div>
           <div class="tagline" id="cd-tags"></div>
           <div id="cd-player" hidden>
-            <div class="pl-tag"><span class="pl-dot"></span>LIVE STREAM — EMBEDDED VIEW</div>
+            <div class="pl-tag"><span class="pl-dot"></span>LIVE STREAM — EMBEDDED VIEW<b id="cd-src" style="margin-left:auto;color:var(--amber);letter-spacing:.1em">SRC —</b></div>
             <div id="cd-player-frame"></div>
-            <div class="pl-note">OFFICIAL SOURCE PLAYER · OPEN LIVE FEED FOR FULL SCREEN</div>
+            <div class="pl-note" id="cd-plnote">OFFICIAL SOURCE PLAYER · OPEN LIVE FEED FOR FULL SCREEN</div>
             <div id="cd-fallback" hidden>
               <button class="btn fb-btn" id="cd-reacquire" type="button">RE-ACQUIRE</button>
-              <button class="btn fb-btn" id="cd-chlive" type="button">CHANNEL-LIVE OVERRIDE</button>
-              <span>SELF-HEALING PIPELINE — on signal loss the console auto-fails-over to the source channel’s current broadcast. RE-ACQUIRE forces a fresh cycle; OPEN LIVE FEED opens the source page full-screen.</span>
+              <button class="btn fb-btn" id="cd-chlive" type="button">CHANNEL-LIVE</button>
+              <button class="btn fb-btn" id="cd-nextsrc" type="button">NEXT SOURCE ↻</button>
+              <button class="btn fb-btn" id="cd-snapshot" type="button">SNAPSHOT MODE</button>
+              <span>NEVER-BLANK PIPELINE — on signal loss the console walks the recovery chain: primary video → channel live → verified alternates → snapshot mode (auto-refreshing live frames). RE-ACQUIRE restarts the chain.</span>
             </div>
           </div>
           <div class="cdv">
@@ -511,7 +513,7 @@ button{font-family:var(--mono)}
 </footer>
 <script>
 'use strict';
-/* ═══ GODS EYE // UAE — FIELD BUILD v2.2 (white-screen watchdog + compat probe) ═══
+/* ═══ GODS EYE // UAE — FIELD BUILD v2.4 (watchdog + error trap + never-blank feed chain) ═══
    Single-file clone of "Middle East Signals Command".
    Live open signals: USGS · Open-Meteo · wheretheiss.at · ADS-B mesh (adsb.lol/adsb.fi with SIM fallback).
    All rendering: Canvas 2D. No frameworks, no build step. */
@@ -543,19 +545,19 @@ const CAMS=[
  {id:'ist-goldenhorn',code:'IST-01',name:'Istanbul — Golden Horn',city:'Istanbul',country:'Türkiye',lat:41.0201,lon:28.9703,provider:'SkylineWebcams',pageUrl:'https://www.skylinewebcams.com/en/webcam/turkey.html',tier:'listed',domain:'URBAN',note:'The Golden Horn estuary — historic waterway between old and new Istanbul.'},
  {id:'jrs-oldcity',code:'JRS-01',name:'Jerusalem — Old City Overview',city:'Jerusalem',country:'Israel / Palestine',lat:31.7767,lon:35.2345,provider:'SkylineWebcams',pageUrl:'https://www.skylinewebcams.com/en/webcam/israel.html',tier:'listed',domain:'HERITAGE',note:'Live view over the Old City of Jerusalem.'},
  {id:'ptra-valley',code:'PTRA-01',name:'Petra — Rose City Approach',city:"Ma'an Governorate",country:'Jordan',lat:30.3285,lon:35.4444,provider:'SkylineWebcams',pageUrl:'https://www.skylinewebcams.com/en/webcam/jordan.html',tier:'listed',domain:'HERITAGE',note:'The Nabataean rose-red city half as old as time.'},
- {id:'dxb-247-burj',code:'DXB-05',name:'Dubai 24/7 — Burj Khalifa Skyline',city:'Dubai',country:'United Arab Emirates',lat:25.1972,lon:55.2744,provider:'UinDubai · YouTube',pageUrl:'https://www.youtube.com/watch?v=eI4UQRrXmgY',embed:'eI4UQRrXmgY',channel:'UCW21lGGm2EeaABsldywDz-g',tier:'verified',domain:'URBAN',note:'Continuous 24/7 live panorama over the Burj Khalifa and Downtown Dubai, streamed by the UinDubai channel.'},
- {id:'dxb-marina-live',code:'DXB-06',name:'Dubai Marina 24/7 — Marina Walk',city:'Dubai',country:'United Arab Emirates',lat:25.0805,lon:55.1403,provider:'UinDubai · YouTube',pageUrl:'https://www.youtube.com/watch?v=K6_VbxTvwkc',embed:'K6_VbxTvwkc',channel:'UCW21lGGm2EeaABsldywDz-g',tier:'verified',domain:'URBAN',note:'Round-the-clock 4K live view over Dubai Marina and the Marina Walk promenade.'},
- {id:'dxb-marina-cities',code:'DXB-07',name:'Dubai Marina 24/7 — CitiesTouch Feed',city:'Dubai',country:'United Arab Emirates',lat:25.0765,lon:55.1330,provider:'CitiesTouch · YouTube',pageUrl:'https://www.youtube.com/watch?v=ho7b8U4TvGg',embed:'ho7b8U4TvGg',channel:'UCoDrjL4eWVbmuZWCoFu76wA',tier:'verified',domain:'URBAN',note:'Independent 24/7 Dubai Marina feed by CitiesTouch — redundancy angle for node DXB-06.'},
- {id:'dxb-jbr',code:'DXB-08',name:'JBR The Walk 24/7 — Beachfront',city:'Dubai',country:'United Arab Emirates',lat:25.0777,lon:55.1321,provider:'UinDubai · YouTube',pageUrl:'https://www.youtube.com/watch?v=mkBhpbIlzvo',embed:'mkBhpbIlzvo',channel:'UCW21lGGm2EeaABsldywDz-g',tier:'verified',domain:'COASTAL',note:'Live JBR Beach and The Walk beachfront promenade — 24/7 stream with night-life coverage.'},
- {id:'dxb-city-center',code:'DXB-09',name:'City Center 24/7 — Downtown Panorama',city:'Dubai',country:'United Arab Emirates',lat:25.1972,lon:55.2744,provider:'UinDubai · YouTube',pageUrl:'https://www.youtube.com/watch?v=h2RzBEWVhGc',embed:'h2RzBEWVhGc',channel:'UCW21lGGm2EeaABsldywDz-g',tier:'verified',domain:'URBAN',note:'24/7 downtown panorama across City Center and the Burj Khalifa district.'},
- {id:'dxb-night-center',code:'DXB-10',name:'Night City Center 24/7 — Burj Skyline',city:'Dubai',country:'United Arab Emirates',lat:25.1935,lon:55.2721,provider:'UinDubai · YouTube',pageUrl:'https://www.youtube.com/watch?v=4oFElrYvqY0',embed:'4oFElrYvqY0',channel:'UCW21lGGm2EeaABsldywDz-g',tier:'verified',domain:'URBAN',note:'Night-oriented 24/7 feed over the illuminated Burj Khalifa skyline.'},
- {id:'mkk-haram',code:'MKKA-01',name:'Makkah — Masjid al-Haram',city:'Makkah',country:'Kingdom of Saudi Arabia',lat:21.3891,lon:39.8256,provider:'Saudi Quran TV (official) · YouTube',pageUrl:'https://www.youtube.com/watch?v=eC4LfEVxvKg',embed:'eC4LfEVxvKg',channel:'UCos52azQNBgW63_9uDJoPDA',tier:'verified',domain:'HERITAGE',note:'Official 24/7 broadcast of the Grand Mosque — Saudi Broadcasting Authority Quran TV channel.'},
- {id:'mkk-kaaba-hd',code:'MKKA-02',name:'Makkah — Kaaba HD 24/7',city:'Makkah',country:'Kingdom of Saudi Arabia',lat:21.4225,lon:39.8262,provider:'Ar Rahman · YouTube',pageUrl:'https://www.youtube.com/watch?v=eHHQq6in4F8',embed:'eHHQq6in4F8',channel:'UCWainKMJPyXikjekccFf3NA',tier:'verified',domain:'HERITAGE',note:'Alternate 24/7 Kaaba HD feed — redundancy angle for node MKKA-01.'},
- {id:'mdn-nabawi',code:'MDNA-01',name:'Madinah — Masjid an-Nabawi',city:'Madinah',country:'Kingdom of Saudi Arabia',lat:24.4672,lon:39.6112,provider:'Saudi Sunnah TV (official) · YouTube',pageUrl:'https://www.youtube.com/watch?v=Rs7St51oDDc',embed:'Rs7St51oDDc',channel:'UCROKYPep-UuODNwyipe6JMw',tier:'verified',domain:'HERITAGE',note:'Official 24/7 broadcast of the Prophet\u2019s Mosque — Saudi Sunnah TV channel.'},
- {id:'mdn-noor',code:'MDNA-02',name:'Madinah — Nabawi Mosque 24/7',city:'Madinah',country:'Kingdom of Saudi Arabia',lat:24.4672,lon:39.6112,provider:'Noor Al-Haram · YouTube',pageUrl:'https://www.youtube.com/watch?v=pHQLWBQPBCE',embed:'pHQLWBQPBCE',channel:'UC621I7zuw1-oYj_KmFkWX8w',tier:'verified',domain:'HERITAGE',note:'Alternate 24/7 Prophet\u2019s Mosque feed — redundancy angle for node MDNA-01.'},
+ {id:'dxb-247-burj',code:'DXB-05',name:'Dubai 24/7 — Burj Khalifa Skyline',city:'Dubai',country:'United Arab Emirates',lat:25.1972,lon:55.2744,provider:'UinDubai · YouTube',pageUrl:'https://www.youtube.com/watch?v=eI4UQRrXmgY',embed:'eI4UQRrXmgY',channel:'UCW21lGGm2EeaABsldywDz-g',tier:'verified',domain:'URBAN',note:'Continuous 24/7 live panorama over the Burj Khalifa and Downtown Dubai, streamed by the UinDubai channel.',alt:['l8wwZ9EqRO0','FIsVHicnpPA','D_V-gkIQ4z0']},
+ {id:'dxb-marina-live',code:'DXB-06',name:'Dubai Marina 24/7 — Marina Walk',city:'Dubai',country:'United Arab Emirates',lat:25.0805,lon:55.1403,provider:'UinDubai · YouTube',pageUrl:'https://www.youtube.com/watch?v=K6_VbxTvwkc',embed:'K6_VbxTvwkc',channel:'UCW21lGGm2EeaABsldywDz-g',tier:'verified',domain:'URBAN',note:'Round-the-clock 4K live view over Dubai Marina and the Marina Walk promenade.',alt:['1FkeR58fdNM','ho7b8U4TvGg']},
+ {id:'dxb-marina-cities',code:'DXB-07',name:'Dubai Marina 24/7 — CitiesTouch Feed',city:'Dubai',country:'United Arab Emirates',lat:25.0765,lon:55.1330,provider:'CitiesTouch · YouTube',pageUrl:'https://www.youtube.com/watch?v=ho7b8U4TvGg',embed:'ho7b8U4TvGg',channel:'UCoDrjL4eWVbmuZWCoFu76wA',tier:'verified',domain:'URBAN',note:'Independent 24/7 Dubai Marina feed by CitiesTouch — redundancy angle for node DXB-06.',alt:['1FkeR58fdNM','K6_VbxTvwkc']},
+ {id:'dxb-jbr',code:'DXB-08',name:'JBR The Walk 24/7 — Beachfront',city:'Dubai',country:'United Arab Emirates',lat:25.0777,lon:55.1321,provider:'UinDubai · YouTube',pageUrl:'https://www.youtube.com/watch?v=mkBhpbIlzvo',embed:'mkBhpbIlzvo',channel:'UCW21lGGm2EeaABsldywDz-g',tier:'verified',domain:'COASTAL',note:'Live JBR Beach and The Walk beachfront promenade — 24/7 stream with night-life coverage.',alt:['FIsVHicnpPA','l8wwZ9EqRO0']},
+ {id:'dxb-city-center',code:'DXB-09',name:'City Center 24/7 — Downtown Panorama',city:'Dubai',country:'United Arab Emirates',lat:25.1972,lon:55.2744,provider:'UinDubai · YouTube',pageUrl:'https://www.youtube.com/watch?v=h2RzBEWVhGc',embed:'h2RzBEWVhGc',channel:'UCW21lGGm2EeaABsldywDz-g',tier:'verified',domain:'URBAN',note:'24/7 downtown panorama across City Center and the Burj Khalifa district.',alt:['FIsVHicnpPA','l8wwZ9EqRO0']},
+ {id:'dxb-night-center',code:'DXB-10',name:'Night City Center 24/7 — Burj Skyline',city:'Dubai',country:'United Arab Emirates',lat:25.1935,lon:55.2721,provider:'UinDubai · YouTube',pageUrl:'https://www.youtube.com/watch?v=4oFElrYvqY0',embed:'4oFElrYvqY0',channel:'UCW21lGGm2EeaABsldywDz-g',tier:'verified',domain:'URBAN',note:'Night-oriented 24/7 feed over the illuminated Burj Khalifa skyline.',alt:['UsVizbCYY4E','FIsVHicnpPA']},
+ {id:'mkk-haram',code:'MKKA-01',name:'Makkah — Masjid al-Haram',city:'Makkah',country:'Kingdom of Saudi Arabia',lat:21.3891,lon:39.8256,provider:'Saudi Quran TV (official) · YouTube',pageUrl:'https://www.youtube.com/watch?v=eC4LfEVxvKg',embed:'eC4LfEVxvKg',channel:'UCos52azQNBgW63_9uDJoPDA',tier:'verified',domain:'HERITAGE',note:'Official 24/7 broadcast of the Grand Mosque — Saudi Broadcasting Authority Quran TV channel.',alt:['kvae1Z2EYRE','MqHrFEk6WLI']},
+ {id:'mkk-kaaba-hd',code:'MKKA-02',name:'Makkah — Kaaba HD 24/7',city:'Makkah',country:'Kingdom of Saudi Arabia',lat:21.4225,lon:39.8262,provider:'Ar Rahman · YouTube',pageUrl:'https://www.youtube.com/watch?v=eHHQq6in4F8',embed:'eHHQq6in4F8',channel:'UCWainKMJPyXikjekccFf3NA',tier:'verified',domain:'HERITAGE',note:'Alternate 24/7 Kaaba HD feed — redundancy angle for node MKKA-01.',alt:['MqHrFEk6WLI','kvae1Z2EYRE']},
+ {id:'mdn-nabawi',code:'MDNA-01',name:'Madinah — Masjid an-Nabawi',city:'Madinah',country:'Kingdom of Saudi Arabia',lat:24.4672,lon:39.6112,provider:'Saudi Sunnah TV (official) · YouTube',pageUrl:'https://www.youtube.com/watch?v=Rs7St51oDDc',embed:'Rs7St51oDDc',channel:'UCROKYPep-UuODNwyipe6JMw',tier:'verified',domain:'HERITAGE',note:'Official 24/7 broadcast of the Prophet\u2019s Mosque — Saudi Sunnah TV channel.',alt:['8kYMUR5Iwk0','_6matAQPoOc']},
+ {id:'mdn-noor',code:'MDNA-02',name:'Madinah — Nabawi Mosque 24/7',city:'Madinah',country:'Kingdom of Saudi Arabia',lat:24.4672,lon:39.6112,provider:'Noor Al-Haram · YouTube',pageUrl:'https://www.youtube.com/watch?v=pHQLWBQPBCE',embed:'pHQLWBQPBCE',channel:'UC621I7zuw1-oYj_KmFkWX8w',tier:'verified',domain:'HERITAGE',note:'Alternate 24/7 Prophet\u2019s Mosque feed — redundancy angle for node MDNA-01.',alt:['_6matAQPoOc','8kYMUR5Iwk0']},
  {id:'jrs-kotel',code:'JRS-02',name:'Jerusalem — Western Wall (Kotel)',city:'Jerusalem',country:'Israel / Palestine',lat:31.7767,lon:35.2345,provider:'EarthCam · YouTube',pageUrl:'https://www.youtube.com/watch?v=77akujLn4k8',embed:'77akujLn4k8',channel:'UC6qrG3W8SMK0jior2olka3g',tier:'verified',domain:'HERITAGE',note:'Official EarthCam 24/7 live view of the Western Wall plaza, Jerusalem.'},
  {id:'jrs-kotel-plaza',code:'JRS-03',name:'Jerusalem — Western Wall Main Plaza',city:'Jerusalem',country:'Israel / Palestine',lat:31.7767,lon:35.2345,provider:'Kotel Cams (official) · YouTube',pageUrl:'https://www.youtube.com/watch?v=LMHUcDktP-w',embed:'LMHUcDktP-w',channel:'UCvcdHbNAQvbe2GuIDLhlwaw',tier:'verified',domain:'HERITAGE',note:'Official Kotel Cams 24/7 view of the Western Wall main plaza.'},
- {id:'me-osint-grid',code:'OSINT-01',name:'Middle East Multi-Feed — OSINT Grid',city:'Regional',country:'Multi-Nation',lat:28.5,lon:45.0,provider:'InquizeX · YouTube',pageUrl:'https://www.youtube.com/watch?v=fn_ZWTr0Tb8',embed:'fn_ZWTr0Tb8',channel:'UCuyLmOJb7PVCvx8zbRT9_GQ',tier:'verified',domain:'OSINT',note:'Rotating HD camera feeds across the Middle East — multi-nation OSINT aggregation.'},
+ {id:'me-osint-grid',code:'OSINT-01',name:'Middle East Multi-Feed — OSINT Grid',city:'Regional',country:'Multi-Nation',lat:28.5,lon:45.0,provider:'InquizeX · YouTube',pageUrl:'https://www.youtube.com/watch?v=fn_ZWTr0Tb8',embed:'fn_ZWTr0Tb8',channel:'UCuyLmOJb7PVCvx8zbRT9_GQ',tier:'verified',domain:'OSINT',note:'Rotating HD camera feeds across the Middle East — multi-nation OSINT aggregation.',alt:['Qgycq-RDamw']},
  {id:'dxb-burj-worldcam',code:'DXB-11',name:'Burj Khalifa — Downtown Skyline',city:'Dubai',country:'United Arab Emirates',lat:25.1972,lon:55.2744,provider:'WorldCam',pageUrl:'https://worldcam.eu/webcams/asia/uae/16986-dubai-burj-khalifa',tier:'listed',domain:'URBAN',note:'Downtown Dubai and the Burj Khalifa district — directory feed with current frame and local weather on the source page.'},
  {id:'auh-babqasr',code:'AUH-05',name:'Masdar City — Bab Al Qasr Resort',city:'Abu Dhabi',country:'United Arab Emirates',lat:24.4267,lon:54.6156,provider:'Vision-Environnement',pageUrl:'https://www.vision-environnement.com/en/webcam/emirats-arabes-unis/abu-dhabi/19676-abu-dhabi-bab-al-qasr-resort-residence-19',tier:'verified',domain:'URBAN',note:'Professional HD resort webcam over the Abu Dhabi waterfront — live stream, weather data and timelapse archive on the source page.'},
 ];
@@ -1057,12 +1059,17 @@ async function probe(url){
   catch(e){return 'BLOCKED';}
   finally{clearTimeout(tm);}
 }
-/* ── SELF-HEALING PLAYER — YouTube IFrame API + auto-failover ──
-   stage 0: source video ID (24/7 stream) — onError →
-   stage 1: channel live_stream (always follows the channel's CURRENT broadcast) →
-   stage 2: fallback strip surfaced — OPEN LIVE FEED / RE-ACQUIRE take over */
+/* ── NEVER-BLANK FEED PIPELINE v2.4 — source chain + watchdog + snapshot mode ──
+   Every embedded node resolves through a SOURCE CHAIN:
+   [0] primary video ID → [1] channel live_stream (follows the channel's CURRENT
+   broadcast) → [2+] verified alt video IDs → final: SNAPSHOT MODE — auto-
+   refreshing i.ytimg.com live thumbnails (near-live imagery, never blank).
+   Advance triggers: YT player onError · 9-second no-playback watchdog ·
+   manual NEXT SOURCE button. The resolved stage is sticky per node, so a feed
+   that failed once resumes from its recovery stage instead of re-failing. */
 let ytApiReady=false,ytApiQueued=false,ytPlayer=null;
-const camFail={}; /* code → failover stage, survives camera switching */
+const camFail={};   /* code → sticky resolved chain stage, survives camera switching */
+const camPlay={c:null,idx:0,chain:[],wd:null,seenPlay:false,snapTimer:null,mode:'player'};
 function ensureYtApi(){
   if(ytApiReady||ytApiQueued)return;
   ytApiQueued=true;
@@ -1072,47 +1079,130 @@ function ensureYtApi(){
   s.onerror=function(){ytApiQueued=false;};
   document.head.appendChild(s);
 }
-function killPlayer(){if(ytPlayer){try{ytPlayer.destroy();}catch(e){}ytPlayer=null;}}
+function killPlayer(){
+  if(ytPlayer){try{ytPlayer.destroy();}catch(e){}ytPlayer=null;}
+  if(camPlay.wd){clearTimeout(camPlay.wd);camPlay.wd=null;}
+}
+function killSnap(){if(camPlay.snapTimer){clearInterval(camPlay.snapTimer);camPlay.snapTimer=null;}}
 function ytIframe(src,c){
   const f=document.createElement('iframe');
   f.src=src;f.allow='autoplay; encrypted-media; picture-in-picture';f.setAttribute('allowfullscreen','');f.loading='lazy';
   f.title=c.code+' live stream';
   return f;
 }
-function mountCamPlayer(c,forceStage){
-  const PF=$('#cd-player-frame');killPlayer();PF.innerHTML='';
-  const stage=forceStage!=null?forceStage:(camFail[c.code]||0);
-  const useLive=c.channel&&(stage>=1||!c.embed);
-  const vsrc='https://www.youtube.com/embed/'+c.embed+'?autoplay=1&mute=1&playsinline=1&rel=0';
-  const lsrc='https://www.youtube.com/embed/live_stream?channel='+c.channel+'&autoplay=1&mute=1&playsinline=1&rel=0';
-  if(useLive){PF.appendChild(ytIframe(lsrc,c));return;}
+function camChain(c){
+  const ch=[];
+  if(c.embed)ch.push({t:'vid',id:c.embed,label:'PRIMARY VIDEO'});
+  if(c.channel)ch.push({t:'chan',id:c.channel,label:'CHANNEL LIVE'});
+  (c.alt||[]).forEach(id=>{if(id!==c.embed)ch.push({t:'vid',id:id,label:'ALT VIDEO'});});
+  return ch;
+}
+function camSrcLabel(){
+  const el=$('#cd-src');if(!el)return;
+  el.textContent=camPlay.mode==='snapshot'
+    ?'SNAPSHOT MODE'
+    :'SRC '+(camPlay.idx+1)+'/'+camPlay.chain.length+' — '+camPlay.chain[camPlay.idx].label;
+}
+function mountSnapshot(c){
+  camPlay.mode='snapshot';killSnap();killPlayer();
+  const PF=$('#cd-player-frame');PF.innerHTML='';
+  const ids=[c.embed].concat(c.alt||[]).filter(Boolean);
+  let si=0;
+  const holder=document.createElement('div');
+  holder.style.cssText='position:absolute;inset:0;overflow:hidden;cursor:pointer';
+  const img=document.createElement('img');
+  img.alt=c.code+' live snapshot';
+  img.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:saturate(1.06) contrast(1.05)';
+  const stamp=document.createElement('div');
+  stamp.style.cssText='position:absolute;left:8px;bottom:8px;z-index:3;background:rgba(5,6,10,.8);border:1px solid rgba(255,176,0,.4);color:#ffb000;font-size:9px;letter-spacing:.12em;padding:3px 7px';
+  holder.appendChild(img);holder.appendChild(stamp);PF.appendChild(holder);
+  function tick(){
+    const id=ids[si%ids.length];si++;
+    img.src='https://i.ytimg.com/vi/'+id+'/maxresdefault.jpg?cb='+Date.now();
+    stamp.textContent='◉ SNAPSHOT · '+new Date().toLocaleTimeString()+' · AUTO-REFRESH 25s · TAP = SOURCE';
+  }
+  img.onerror=function(){if(camPlay.mode==='snapshot'&&ids.length>1)tick();};
+  holder.onclick=function(){window.open(c.pageUrl,'_blank','noopener');};
+  tick();
+  camPlay.snapTimer=setInterval(tick,25000);
+  camSrcLabel();
+  $('#cd-plnote').textContent='SNAPSHOT MODE — near-live thumbnails auto-refresh every 25 s (server-side frame of the live broadcast). Full motion: NEXT SOURCE / CHANNEL-LIVE, or OPEN LIVE FEED.';
+  logEvent('warn',c.code+' SNAPSHOT MODE — embedded player unavailable in this network; near-live imagery maintained');
+}
+function armWatchdog(c){
+  if(camPlay.wd)clearTimeout(camPlay.wd);
+  camPlay.seenPlay=false;
+  camPlay.wd=setTimeout(function(){
+    if(camPlay.seenPlay||!camPlay.c||camPlay.c!==c||camPlay.mode!=='player')return;
+    logEvent('warn',c.code+' feed stalled — no playback for 9 s, advancing source chain');
+    camFail[c.code]=camPlay.idx+1;
+    mountSource(camPlay.idx+1);
+  },9000);
+}
+function mountSource(idx){
+  const c=camPlay.c;if(!c)return;
+  const ch=camPlay.chain;
+  if(idx>=ch.length){mountSnapshot(c);return;}
+  camPlay.idx=idx;camPlay.mode='player';
+  killPlayer();killSnap();
+  const PF=$('#cd-player-frame');PF.innerHTML='';
+  const src=ch[idx];
+  camSrcLabel();
+  $('#cd-plnote').textContent='OFFICIAL SOURCE PLAYER · AUTO-FAILOVER CHAIN '+ch.length+' DEEP · OPEN LIVE FEED FOR FULL SCREEN';
+  if(src.t==='chan'){
+    PF.appendChild(ytIframe('https://www.youtube.com/embed/live_stream?channel='+src.id+'&autoplay=1&mute=1&playsinline=1&rel=0',c));
+    $('#cd-fallback').hidden=false;
+    return; /* cross-origin iframe: playback not observable — NEXT SOURCE is manual here */
+  }
   ensureYtApi();
   const holder=document.createElement('div');
   holder.style.cssText='position:absolute;inset:0';
   PF.appendChild(holder);
+  const vsrc='https://www.youtube.com/embed/'+src.id+'?autoplay=1&mute=1&playsinline=1&rel=0';
   function build(){
-    if(!S.selected||S.selected!==c)return;
-    if(!window.YT||!ytApiReady){holder.replaceWith(ytIframe(vsrc,c));return;}
+    if(!camPlay.c||camPlay.c!==c||camPlay.mode!=='player')return;
+    if(!window.YT||!ytApiReady){
+      /* YT API script blocked by network — video-ID embeds can't self-heal;
+         jump straight to the channel-live iframe (works without the API). */
+      const ci=ch.findIndex(s=>s.t==='chan');
+      if(ci>camPlay.idx){logEvent('warn',c.code+' YT API blocked — routing to channel-live feed');mountSource(ci);}
+      else{PF.replaceChild(ytIframe(vsrc,c),holder);}
+      return;
+    }
     try{
-      ytPlayer=new YT.Player(holder,{width:'100%',height:'100%',videoId:c.embed,
+      ytPlayer=new YT.Player(holder,{width:'100%',height:'100%',videoId:src.id,
         playerVars:{autoplay:1,mute:1,playsinline:1,rel:0},
-        events:{onError:function(e){
-          if(c.channel&&(camFail[c.code]||0)<1){
-            camFail[c.code]=1;
-            logEvent('warn',c.code+' SIGNAL LOST (err '+e.data+') — AUTO-FAILOVER to source channel current broadcast');
-            mountCamPlayer(c,1);$('#cd-fallback').hidden=false;
-          }else{
-            logEvent('warn',c.code+' embedded player rejected (err '+e.data+') — OPEN LIVE FEED or RE-ACQUIRE');
-            $('#cd-fallback').hidden=false;
+        events:{
+          onReady:function(e){try{e.target.playVideo();}catch(err){}},
+          onStateChange:function(e){
+            if(e.data===1&&YT.PlayerState&&YT.PlayerState.PLAYING===1){
+              camPlay.seenPlay=true;
+              if(camPlay.wd){clearTimeout(camPlay.wd);camPlay.wd=null;}
+              logEvent('info',c.code+' LOCK — '+src.label.toLowerCase()+' source '+(camPlay.idx+1)+'/'+ch.length+' playing');
+            }
+          },
+          onError:function(e){
+            logEvent('warn',c.code+' source rejected (err '+e.data+') — advancing source chain');
+            camFail[c.code]=Math.max(camFail[c.code]||0,idx)+1;
+            mountSource(idx+1);
           }
-        }}});
-    }catch(e){holder.replaceWith(ytIframe(vsrc,c));}
+        }});
+    }catch(e){PF.replaceChild(ytIframe(vsrc,c),holder);return;}
+    armWatchdog(c);
   }
   if(ytApiReady)build();else setTimeout(build,900);
+  $('#cd-fallback').hidden=false;
+}
+function mountCamPlayer(c,forceIdx){
+  killSnap();
+  camPlay.c=c;camPlay.mode='player';
+  camPlay.chain=camChain(c);
+  const sticky=Math.min(camFail[c.code]||0,camPlay.chain.length);
+  mountSource(forceIdx!=null?forceIdx:sticky);
 }
 function showCamDetail(c){
   const det=$('#cam-detail'),emp=$('#cam-empty');
-  if(!c){det.style.display='none';emp.style.display='block';$('#cd-player').hidden=true;killPlayer();$('#cd-player-frame').innerHTML='';return;}
+  if(!c){det.style.display='none';emp.style.display='block';$('#cd-player').hidden=true;killPlayer();killSnap();camPlay.c=null;$('#cd-player-frame').innerHTML='';return;}
   det.style.display='block';emp.style.display='none';
   $('#cd-name').textContent=c.code+' — '+c.name;
   $('#cd-city').textContent=c.city.toUpperCase()+' · '+c.country.toUpperCase();
@@ -1129,13 +1219,15 @@ function showCamDetail(c){
   const PL=$('#cd-player'),PF=$('#cd-player-frame');
   if(c.embed){PL.hidden=false;
     mountCamPlayer(c);
-    $('#cd-fallback').hidden=(camFail[c.code]||0)<1;$('#cd-chlive').style.display=c.channel?'':'none';}
-  else{PL.hidden=true;killPlayer();PF.innerHTML='';$('#cd-fallback').hidden=true;}
-  $('#cd-note').textContent=c.note+' '+(c.embed?'Live view embedded above via the source\u2019s official player — on signal loss the console auto-fails-over to the channel\u2019s current broadcast; OPEN LIVE FEED opens the full-screen source page.':'Source page opens in a new tab — providers serve the live stream on their own domain (X-Frame-Options protected).');
+    $('#cd-fallback').hidden=false;$('#cd-chlive').style.display=c.channel?'':'none';}
+  else{PL.hidden=true;killPlayer();killSnap();camPlay.c=null;PF.innerHTML='';$('#cd-fallback').hidden=true;}
+  $('#cd-note').textContent=c.note+' '+(c.embed?'Live view embedded above via the source\u2019s official player — the console walks a '+((c.alt||[]).length+2)+'-step recovery chain (primary video → channel live → verified alternates → snapshot mode) so a picture is ALWAYS maintained; OPEN LIVE FEED opens the full-screen source page.':'Source page opens in a new tab — providers serve the live stream on their own domain (X-Frame-Options protected).');
   probe(c.pageUrl).then(r=>{if(S.selected===c)$('#cd-link').textContent=r;});
 }
 $('#cd-reacquire').addEventListener('click',()=>{const c=S.selected;if(!c||!c.embed)return;camFail[c.code]=0;mountCamPlayer(c,0);logEvent('warn',c.code+' RE-ACQUIRE — fresh acquisition cycle on source video ID');});
-$('#cd-chlive').addEventListener('click',()=>{const c=S.selected;if(!c||!c.channel)return;camFail[c.code]=1;mountCamPlayer(c,1);logEvent('warn',c.code+' CHANNEL-LIVE OVERRIDE — following source channel current broadcast');});
+$('#cd-chlive').addEventListener('click',()=>{const c=S.selected;if(!c||!c.channel)return;const ci=camPlay.chain.findIndex(s=>s.t==='chan');camFail[c.code]=ci<0?0:ci;mountCamPlayer(c,camFail[c.code]);logEvent('warn',c.code+' CHANNEL-LIVE OVERRIDE — following source channel current broadcast');});
+$('#cd-nextsrc').addEventListener('click',()=>{const c=S.selected;if(!c||!c.embed)return;const next=(camPlay.mode==='snapshot'?camPlay.chain.length:camPlay.idx+1);camFail[c.code]=next;mountSource(next);logEvent('warn',c.code+' MANUAL SKIP — advancing source chain');});
+$('#cd-snapshot').addEventListener('click',()=>{const c=S.selected;if(!c||!c.embed)return;camFail[c.code]=camPlay.chain.length;mountSnapshot(c);});
 
 /* ── AIR / ENV / WIRE / AI renders ── */
 let selAc=null;
@@ -1226,7 +1318,7 @@ $('#watch-btn').onclick=()=>{
 
 /* ── BOOT ── */
 const BOOTLINES=[
-  '> INITIALIZING GODS EYE KERNEL v2.3 — BUILD '+(window.__GE_BUILD__||'R3')+' ............ OK',
+  '> INITIALIZING GODS EYE KERNEL v2.4 — BUILD '+(window.__GE_BUILD__||'R4')+' ............ OK',
   '> LINKING PUBLIC ADS-B MESH (GULF SECTOR) ...... OK',
   '> ACQUIRING UAE CAMERA GRID .................... OK',
   '> USGS SEISMIC UPLINK .......................... OK',
@@ -1296,7 +1388,7 @@ try{
   $('#c-air').textContent=S.aircraft.length;$('#air-mode').textContent='SIM CONTACTS';
   setChip('adsb','SIM','sim');
   buildLayers();buildCamList();
-  var stampEl=$('#ge-build');if(stampEl)stampEl.textContent='BUILD '+(window.__GE_BUILD__||'R3');
+  var stampEl=$('#ge-build');if(stampEl)stampEl.textContent='BUILD '+(window.__GE_BUILD__||'R4');
   $('#c-cam').textContent=CAMS.length;
   logEvent('info','GODS EYE FIELD BUILD online — single-file console, Canvas 2D renderer');
   logEvent('info','31-node camera manifest loaded — UAE grid + ME regional');

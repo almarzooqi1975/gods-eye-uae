@@ -3,6 +3,39 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+/* ── WHITE-SCREEN WATCHDOG (ES5 — parse-error proof) ─────────────────────────
+   Runs before everything else. If the console does not finish booting within
+   12 s (stale cache, older browser, blocked network, mid-deploy snapshot),
+   this watchdog force-reveals the HUD and surfaces a recovery strip with
+   direct links to the live feeds. The operator is NEVER left staring at a
+   blank screen. */
+(function(){
+  'use strict';
+  window.__GE_BOOT_OK__=false;
+  function geRecover(){
+    if(window.__GE_BOOT_OK__)return;
+    try{
+      var b=document.getElementById('boot');
+      if(b&&b.parentNode)b.parentNode.removeChild(b);
+      var main=document.getElementById('main');
+      if(main&&document.body&&!document.getElementById('ge-recovery')){
+        var bar=document.createElement('div');
+        bar.id='ge-recovery';
+        bar.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:99998;background:#1a1206;color:#ffb000;border-top:1px solid rgba(255,176,0,.45);font:10px/1.7 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.08em;padding:6px 12px';
+        bar.innerHTML='RECOVERY MODE — console did not fully boot in this browser/session. HARD-REFRESH (CTRL+SHIFT+R, or clear site data on mobile) for full systems. Direct 24/7 feeds:'
+          +' <a href="https://www.youtube.com/watch?v=eI4UQRrXmgY" target="_blank" rel="noopener" style="color:#ffc233;margin:0 6px">DUBAI ↗</a>'
+          +' <a href="https://www.youtube.com/watch?v=K6_VbxTvwkc" target="_blank" rel="noopener" style="color:#ffc233;margin:0 6px">DUBAI MARINA ↗</a>'
+          +' <a href="https://www.youtube.com/watch?v=eC4LfEVxvKg" target="_blank" rel="noopener" style="color:#ffc233;margin:0 6px">MAKKAH ↗</a>'
+          +' <a href="https://www.youtube.com/watch?v=Rs7St51oDDc" target="_blank" rel="noopener" style="color:#ffc233;margin:0 6px">MADINAH ↗</a>';
+        document.body.appendChild(bar);
+      }
+    }catch(e){}
+  }
+  window.__GE_RECOVER__=geRecover;
+  setTimeout(geRecover,12000);
+})();
+</script>
 <title>GODS EYE // UAE — Middle East Signals Command</title>
 <meta name="description" content="Gods Eye — open-signals mission console for Middle East cameras. UAE first: 31-node live camera grid, ADS-B air traffic, USGS seismic, ISS telemetry, weather wire.">
 <meta property="og:type" content="website">
@@ -445,7 +478,7 @@ button{font-family:var(--mono)}
 </footer>
 <script>
 'use strict';
-/* ═══ GODS EYE // UAE — FIELD BUILD ═══
+/* ═══ GODS EYE // UAE — FIELD BUILD v2.2 (white-screen watchdog + compat probe) ═══
    Single-file clone of "Middle East Signals Command".
    Live open signals: USGS · Open-Meteo · wheretheiss.at · ADS-B mesh (adsb.lol/adsb.fi with SIM fallback).
    All rendering: Canvas 2D. No frameworks, no build step. */
@@ -985,9 +1018,11 @@ function selectCam(c,quiet){
 }
 async function probe(url){
   const t0=performance.now();
-  try{await fetch(url,{mode:'no-cors',signal:AbortSignal.timeout(6000)});
+  const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),6000); /* manual abort — AbortSignal.timeout needs Chrome 103+/Safari 16+ */
+  try{await fetch(url,{mode:'no-cors',signal:ac.signal});
     return Math.round(performance.now()-t0)+'ms';}
   catch(e){return 'BLOCKED';}
+  finally{clearTimeout(tm);}
 }
 /* ── SELF-HEALING PLAYER — YouTube IFrame API + auto-failover ──
    stage 0: source video ID (24/7 stream) — onError →
@@ -1183,8 +1218,10 @@ function runBoot(){
   }
   function endBoot(){
     if(bootDone)return;bootDone=true;
-    $('#boot').classList.add('fade');
-    setTimeout(()=>$('#boot').remove(),600);
+    window.__GE_BOOT_OK__=true;
+    var b=$('#boot');if(!b)return;
+    b.classList.add('fade');
+    setTimeout(()=>{var x=$('#boot');if(x)x.remove();},600);
   }
   $('#boot').onclick=endBoot;
   next();
